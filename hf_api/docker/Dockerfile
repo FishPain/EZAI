@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED 1
 # use tsinghua pip mirror if server is running in China 
 # if not can comment out this line and pip will use the default
 # pip mirror
-ENV PIP_INDEX_URL https://pypi.tuna.tsinghua.edu.cn/simple
+# ENV PIP_INDEX_URL https://pypi.tuna.tsinghua.edu.cn/simple
 
 # tells Flask to look for an application instance named app in the server module 
 ENV FLASK_APP server:app
