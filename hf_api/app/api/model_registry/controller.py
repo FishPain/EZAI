@@ -1,7 +1,9 @@
 from flask import request
 from flask_restx import Namespace, Resource, fields
+
 from app.models.models import ModelRegistryModel, JobsModel
 from app.api.model_registry.handler import clean_up_model_resources, register_model
+from app.core.auth_utils import token_required
 
 ns = Namespace("Model Registry", description="Model registry operations")
 
@@ -58,7 +60,8 @@ delete_parser.add_argument(
 class ModelRegistry(Resource):
     @ns.expect(get_parser)
     @ns.response(200, "Success", get_fields)
-    def get(self):
+    @token_required
+    def get(user_id):
         """
         Get Model Registry Infomation by UUID
         """
@@ -79,11 +82,12 @@ class ModelRegistry(Resource):
 
     @ns.expect(post_parser)
     @ns.response(200, "Success", post_fields)
-    def post(self):
+    @token_required
+    def post(user_id):
         """
         Create a sagemaker endpoint for the model
         """
-       
+
         model_uuid = request.args.get("uuid")
 
         task_id = register_model(model_uuid)
@@ -96,7 +100,8 @@ class ModelRegistry(Resource):
 
     @ns.expect(delete_parser)
     @ns.response(200, "Success")
-    def delete(self):
+    @token_required
+    def delete(user_id):
         """
         Delete a model from s3 and db by UUID
         """
@@ -143,7 +148,8 @@ get_status_fields = ns.model(
 class ModelRegistryStatus(Resource):
     @ns.expect(get_status_parser)
     @ns.response(200, "Success", get_status_fields)
-    def get(self):
+    @token_required
+    def get(user_id):
         """
         Get Model Registry Job by UUID
         """

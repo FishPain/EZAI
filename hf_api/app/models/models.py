@@ -23,7 +23,7 @@ class UserModel(Base):
     def __init__(self, username, email, password):
         self.username = username
         self.email = email
-        self.password = self.set_password(password)
+        self.password = password
 
     def __repr__(self):
         return f"<UserModel {self.user_uuid}>"
@@ -31,24 +31,18 @@ class UserModel(Base):
     @staticmethod
     def create_user(username, email, password):
         # if user exists, raise an exception
-        if UserModel.get_user_uuid_by_email(email):
+        if UserModel.get_user_by_email(email):
             raise Exception("User already exists")
 
         new_user = UserModel(username=username, email=email, password=password)
-        try:
-            session.add(new_user)
-            session.commit()
-            return new_user.user_uuid
-        except Exception as e:
-            session.rollback()
-            raise e
+
+        session.add(new_user)
+        session.commit()
+        return new_user.user_uuid
 
     @staticmethod
-    def get_user_uuid_by_email(email):
-        user = session.query(UserModel).filter_by(email=email).first()
-        if user:
-            return user.user_uuid
-        return None
+    def get_user_by_email(email):
+        return session.query(UserModel).filter_by(email=email).first()
 
     @staticmethod
     def get_hashed_password_by_username(username):
@@ -60,15 +54,6 @@ class UserModel(Base):
     @staticmethod
     def get_user_record_by_uuid(user_uuid):
         return session.query(UserModel).filter_by(user_uuid=user_uuid).first()
-
-    def set_password(self, raw_password):
-        return bcrypt.hashpw(raw_password.encode("utf-8"), bcrypt.gensalt())
-
-    def check_password(self, raw_password):
-        hashed_password = self.get_hashed_password_by_username(self.username)
-        if hashed_password:
-            return bcrypt.checkpw(raw_password.encode("utf-8"), hashed_password)
-        return False
 
 
 class MLModel(Base):
@@ -91,7 +76,7 @@ class MLModel(Base):
 
     @staticmethod
     def save_model_to_db(model_name, model_type, s3_url):
-        dummy_user_uuid = UserModel.get_user_uuid_by_email("dummyUser@dummy.com")
+        dummy_user_uuid = UserModel.get_user_by_email("dummyUser@dummy.com").user_uuid
         if dummy_user_uuid is None:
             raise Exception("User does not exist")
 

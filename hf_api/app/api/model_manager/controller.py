@@ -1,6 +1,8 @@
 from flask import request
 from flask_restx import Namespace, Resource, fields
+
 from app.api.model_manager.handler import push_to_s3, download_from_s3
+from app.core.auth_utils import token_required
 
 ns = Namespace("Model Manager", description="Model management operations")
 
@@ -55,7 +57,8 @@ post_model_fields = ns.model(
 class ModelManager(Resource):
     @ns.expect(get_parser)
     @ns.response(200, "Success", get_model_fields)
-    def get(self):
+    @token_required
+    def get(user_id):
         """
         Get model s3 path by UUID from db
         """
@@ -65,7 +68,8 @@ class ModelManager(Resource):
 
     @ns.expect(upload_parser)
     @ns.response(200, "Success", post_model_fields)
-    def post(self):
+    @token_required
+    def post(user_id):
         """
         Upload a model to S3 and returns the model UUID and S3 path
         """
@@ -79,7 +83,8 @@ class ModelManager(Resource):
 
     @ns.expect(delete_parser)
     @ns.response(200, "Success")
-    def delete(self):
+    @token_required
+    def delete(user_id):
         """
         Delete a model from s3 and db by UUID
         """

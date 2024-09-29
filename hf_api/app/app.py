@@ -1,4 +1,4 @@
-import json, os
+import json, os, secrets
 
 from flask import Flask, Blueprint, render_template
 from flask_cors import CORS
@@ -26,15 +26,29 @@ def init_app():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
 
+    os.environ["SECRET_KEY"] = secrets.token_urlsafe(16)
+
+    app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+
     # Register application endpoints using Blueprint
     blueprint = Blueprint("api", __name__, url_prefix=f"/{app_constants.API_VERSION}")
+
+    authorizations = {
+        'Bearer': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization',
+            'description': 'Enter "Bearer <token>"'
+        }
+    }
 
     api = Api(
         blueprint,
         title=app_constants.SERVICE_NAME,
         version=app_constants.API_VERSION,
         description=app_constants.SERVICE_DESCRIPTION,
-        doc="/docs/",
+        doc="/docs/", 
+        authorizations=authorizations
     )
 
     register_namespaces(api)

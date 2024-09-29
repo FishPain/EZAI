@@ -19,3 +19,4 @@ bcrypt
 # Optional dependencies: Can remove if unused
 gunicorn
 python-dotenv
+pyjwt

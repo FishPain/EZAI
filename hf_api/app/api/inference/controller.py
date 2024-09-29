@@ -1,12 +1,10 @@
+import uuid, json
 from flask import request
 from flask_restx import Namespace, Resource, fields
-from app.core.SagemakerManager import SagemakerManager
 from app.constants import SageMakerConstants as sm_constants
-from app.core.auth_utils import get_header
+from app.core.SagemakerManager import SagemakerManager
+from app.core.auth_utils import get_header, token_required
 from app.models.models import ModelRegistryModel, InferenceModel, UserModel, MLModel
-import uuid
-
-import json
 
 ns = Namespace("Inference", description="Inference operations")
 
@@ -49,7 +47,8 @@ inference_result_model = ns.model(
 class Inference(Resource):
     @ns.expect(get_parser)
     @ns.response(200, "Success", inference_result_model)
-    def get(self):
+    @token_required
+    def get(user_id):
         """Get inference result by inference id"""
         inference_uuid = request.args.get("uuid")
         inference_result = {
@@ -65,7 +64,8 @@ class Inference(Resource):
     # flask status code 200
     @ns.expect(upload_parser)
     @ns.response(200, "Success", inference_model)
-    def post(self):
+    @token_required
+    def post(user_id):
         """Post an inference job"""
         # Process the JSON data here
         # You can perform any required operations
@@ -93,16 +93,18 @@ class Inference(Resource):
 
             if "inputs" not in json_data:
                 return "Invalid JSON data provided", 400
-            
+
             json_string = json.dumps(json_data)
-            
+
             header = get_header(payload=json_string, endpoint=model_endpoint)
-            
+
             response = sm.invoke_endpoint(
                 endpoint=inference_endpoint, payload=json_string, header=header
             )
 
-            dummy_user_uuid = UserModel.get_user_uuid_by_email("dummyUser@dummy.com")
+            dummy_user_uuid = UserModel.get_user_by_email(
+                "dummyUser@dummy.com"
+            ).user_uuid
             if dummy_user_uuid is None:
                 raise Exception("User does not exist")
 
@@ -131,7 +133,8 @@ class Inference(Resource):
 
     @ns.expect(delete_parser)
     @ns.response(200, "Success")
-    def delete(self):
+    @token_required
+    def delete(user_id):
         """Delete the inference based on inference id and returns 200 if success"""
         inference_uuid = request.args.get("uuid")
 
