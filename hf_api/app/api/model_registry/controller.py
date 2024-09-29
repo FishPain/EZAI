@@ -60,6 +60,7 @@ delete_parser.add_argument(
 class ModelRegistry(Resource):
     @ns.expect(get_parser)
     @ns.response(200, "Success", get_fields)
+    @ns.doc(security="Bearer")
     @token_required
     def get(user_id):
         """
@@ -82,6 +83,7 @@ class ModelRegistry(Resource):
 
     @ns.expect(post_parser)
     @ns.response(200, "Success", post_fields)
+    @ns.doc(security="Bearer")
     @token_required
     def post(user_id):
         """
@@ -100,6 +102,7 @@ class ModelRegistry(Resource):
 
     @ns.expect(delete_parser)
     @ns.response(200, "Success")
+    @ns.doc(security="Bearer")
     @token_required
     def delete(user_id):
         """
@@ -148,6 +151,7 @@ get_status_fields = ns.model(
 class ModelRegistryStatus(Resource):
     @ns.expect(get_status_parser)
     @ns.response(200, "Success", get_status_fields)
+    @ns.doc(security="Bearer")
     @token_required
     def get(user_id):
         """

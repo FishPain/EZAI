@@ -57,6 +57,7 @@ post_model_fields = ns.model(
 class ModelManager(Resource):
     @ns.expect(get_parser)
     @ns.response(200, "Success", get_model_fields)
+    @ns.doc(security="Bearer")
     @token_required
     def get(user_id):
         """
@@ -68,6 +69,7 @@ class ModelManager(Resource):
 
     @ns.expect(upload_parser)
     @ns.response(200, "Success", post_model_fields)
+    @ns.doc(security="Bearer")
     @token_required
     def post(user_id):
         """
@@ -83,6 +85,7 @@ class ModelManager(Resource):
 
     @ns.expect(delete_parser)
     @ns.response(200, "Success")
+    @ns.doc(security="Bearer")
     @token_required
     def delete(user_id):
         """

@@ -89,25 +89,9 @@ class UserLogin(Resource):
         }, 200
 
 
-@ns.route("/logout")
-class UserLogout(Resource):
-    @ns.response(200, "Success", response_model)
-    @ns.doc(security="Bearer")
-    @token_required
-    def post(user_id):
-        """Logout the current user"""
-        # Clear bearer token
-        session.pop("user_uuid", None)
-
-        # Return a proper JSON-serializable response
-        return {"message": "Logged out successfully", "uuid": None}, 200
-
-
 @ns.route("/dummy")
 class DummyUser(Resource):
     @ns.response(200, "Success", response_model)
-    @ns.doc(security="Bearer")
-    @token_required
     def post(user_id):
         """Create Dummy User"""
         print(f"here2: {user_id}")

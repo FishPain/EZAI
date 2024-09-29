@@ -47,6 +47,7 @@ inference_result_model = ns.model(
 class Inference(Resource):
     @ns.expect(get_parser)
     @ns.response(200, "Success", inference_result_model)
+    @ns.doc(security="Bearer")
     @token_required
     def get(user_id):
         """Get inference result by inference id"""
@@ -64,6 +65,7 @@ class Inference(Resource):
     # flask status code 200
     @ns.expect(upload_parser)
     @ns.response(200, "Success", inference_model)
+    @ns.doc(security="Bearer")
     @token_required
     def post(user_id):
         """Post an inference job"""
@@ -133,6 +135,7 @@ class Inference(Resource):
 
     @ns.expect(delete_parser)
     @ns.response(200, "Success")
+    @ns.doc(security="Bearer")
     @token_required
     def delete(user_id):
         """Delete the inference based on inference id and returns 200 if success"""
