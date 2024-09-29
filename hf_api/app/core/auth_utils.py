@@ -5,7 +5,6 @@ import hmac
 import json
 import os
 
-
 def get_signature_key(key, date_stamp, region_name, service_name):
     k_date = hmac.new(("AWS4" + key).encode('utf-8'), date_stamp.encode('utf-8'), hashlib.sha256).digest()
     k_region = hmac.new(k_date, region_name.encode('utf-8'), hashlib.sha256).digest()

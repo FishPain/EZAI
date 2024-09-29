@@ -1,4 +1,4 @@
-import uuid, os
+import uuid, os, bcrypt
 from datetime import datetime
 
 from sqlalchemy import create_engine
@@ -12,17 +12,18 @@ Base = declarative_base()
 
 session = sessionmaker(bind=engine)()
 
+
 class UserModel(Base):
     __tablename__ = "user_model"
     user_uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     username = Column(String(80), nullable=False)
-    email = Column(String(80), unique=True, nullable=False)
-    password = Column(String(80), nullable=False)
+    email = Column(String(120), unique=True, nullable=False)
+    password = Column(String(128), nullable=False)
 
     def __init__(self, username, email, password):
         self.username = username
         self.email = email
-        self.password = password
+        self.password = self.set_password(password)
 
     def __repr__(self):
         return f"<UserModel {self.user_uuid}>"
@@ -33,22 +34,41 @@ class UserModel(Base):
         if UserModel.get_user_uuid_by_email(email):
             raise Exception("User already exists")
 
-        model = UserModel(username=username, email=email, password=password)
-        session.add(model)
-        session.commit()
-        return model.user_uuid
+        new_user = UserModel(username=username, email=email, password=password)
+        try:
+            session.add(new_user)
+            session.commit()
+            return new_user.user_uuid
+        except Exception as e:
+            session.rollback()
+            raise e
 
     @staticmethod
     def get_user_uuid_by_email(email):
         user = session.query(UserModel).filter_by(email=email).first()
         if user:
             return user.user_uuid
-        else:
-            return None
+        return None
+
+    @staticmethod
+    def get_hashed_password_by_username(username):
+        user = session.query(UserModel).filter_by(username=username).first()
+        if user:
+            return user.password
+        return None
 
     @staticmethod
     def get_user_record_by_uuid(user_uuid):
         return session.query(UserModel).filter_by(user_uuid=user_uuid).first()
+
+    def set_password(self, raw_password):
+        return bcrypt.hashpw(raw_password.encode("utf-8"), bcrypt.gensalt())
+
+    def check_password(self, raw_password):
+        hashed_password = self.get_hashed_password_by_username(self.username)
+        if hashed_password:
+            return bcrypt.checkpw(raw_password.encode("utf-8"), hashed_password)
+        return False
 
 
 class MLModel(Base):
@@ -199,7 +219,7 @@ class InferenceModel(Base):
             .filter_by(inference_uuid=inference_uuid)
             .first()
         )
-    
+
     @staticmethod
     def get_record_by_model_registry_uuid(model_registry_uuid):
         return (
@@ -207,7 +227,7 @@ class InferenceModel(Base):
             .filter_by(model_registry_uuid=model_registry_uuid)
             .first()
         )
-    
+
     @staticmethod
     def delete_record_by_uuid(inference_uuid):
         record = (

@@ -67,14 +67,11 @@ def init_app():
     def index():
         return render_template("index.html")
 
-    @app.route("/management")
-    def console():
-        return render_template("console.html")
+    @app.route("/health")
+    def health():
+        return {"status": "healthy"}, 200
 
-    @app.route("/game")
-    def game():
-        return render_template("game.html")
-
+    # add more routes here
     return app
 
 

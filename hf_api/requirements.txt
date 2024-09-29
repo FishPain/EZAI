@@ -15,6 +15,7 @@ sagemaker
 psycopg2-binary
 celery
 supervisor~=4.2
+bcrypt
 # Optional dependencies: Can remove if unused
 gunicorn
 python-dotenv
