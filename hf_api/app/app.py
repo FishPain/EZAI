@@ -1,6 +1,6 @@
 import json, os
 
-from flask import Flask, Blueprint
+from flask import Flask, Blueprint, render_template
 from flask_cors import CORS
 from flask_restx import Api
 
@@ -12,6 +12,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from app.constants import AppConstants as app_constants
 from app.constants import SageMakerConstants as sm_constants
 from app.core.SagemakerManager import SagemakerManager
+
 
 def init_app():
     """Spawns the application"""
@@ -60,6 +61,19 @@ def init_app():
             "name": err.name,
         }
         return data, err.code
+
+    # Add route for the HTML page
+    @app.route("/")
+    def index():
+        return render_template("index.html")
+
+    @app.route("/management")
+    def console():
+        return render_template("console.html")
+
+    @app.route("/game")
+    def game():
+        return render_template("game.html")
 
     return app
 

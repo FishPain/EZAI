@@ -28,19 +28,12 @@ class UserModel(Base):
         return f"<UserModel {self.user_uuid}>"
 
     @staticmethod
-    def create_dummy_user():
-        # create a dummy user
-        dummy_username = "dummyUser"
-        dummy_email = "dummyUser@dummy.com"
-        dummy_pwd = "dummyHexPwd"
-
+    def create_user(username, email, password):
         # if user exists, raise an exception
-        if UserModel.get_user_uuid_by_email(dummy_email):
+        if UserModel.get_user_uuid_by_email(email):
             raise Exception("User already exists")
 
-        model = UserModel(
-            username=dummy_username, email=dummy_email, password=dummy_pwd
-        )
+        model = UserModel(username=username, email=email, password=password)
         session.add(model)
         session.commit()
         return model.user_uuid

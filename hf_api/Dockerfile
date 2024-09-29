@@ -16,6 +16,7 @@ WORKDIR /app
 
 # Copy requirements.txt to the working directory
 COPY requirements.txt /app/
+
 COPY /libs/ /app/libs/
 
 # Install dependencies
@@ -24,8 +25,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the current directory contents into the container at /app
 COPY . /app/
 
+# Copy supervisord configuration file
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 # Expose port
 EXPOSE 5000
 
-# Command to run the application
-CMD ["python", "server.py"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+

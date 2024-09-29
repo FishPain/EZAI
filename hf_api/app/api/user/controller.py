@@ -17,7 +17,12 @@ class User(Resource):
     def post(self):
         """Create Dummy User"""
         try:
-            user_uuid = UserModel.create_dummy_user()
+            dummy_username = "dummyUser"
+            dummy_email = "dummyUser@dummy.com"
+            dummy_pwd = "dummyHexPwd"
+
+            user_uuid = UserModel.create_user(dummy_username, dummy_email, dummy_pwd)
+
             
         except Exception as e:
             return {"message": f"Failed to create dummy user: {e}"}, 500       
