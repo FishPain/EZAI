@@ -9,7 +9,6 @@ from functools import wraps
 from flask import session, jsonify, request, current_app, abort
 import jwt
 
-
 from app.models.models import UserModel
 
 

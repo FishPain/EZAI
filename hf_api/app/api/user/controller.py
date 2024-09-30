@@ -33,7 +33,7 @@ response_model = ns.model(
 class UserSignup(Resource):
     @ns.expect(user_signup_parser)
     @ns.response(200, "Success", response_model)
-    def post():
+    def post(self):
         """Sign up a new user"""
         try:
             # Extract data from JSON body
@@ -59,7 +59,7 @@ class UserSignup(Resource):
 class UserLogin(Resource):
     @ns.expect(user_login_parser)
     @ns.response(200, "Success", response_model)
-    def post():
+    def post(self):
         """Login a user"""
         try:
             # Extract data from JSON body
@@ -92,16 +92,14 @@ class UserLogin(Resource):
 @ns.route("/dummy")
 class DummyUser(Resource):
     @ns.response(200, "Success", response_model)
-    def post(user_id):
+    def post(self):
         """Create Dummy User"""
-        print(f"here2: {user_id}")
         try:
             dummy_username = "dummyUser"
             dummy_email = "dummyUser@dummy.com"
             dummy_pwd = "dummyHexPwd"
 
             user_uuid = UserModel.create_user(dummy_username, dummy_email, dummy_pwd)
-            print("here3")
         except Exception as e:
             return {"message": f"Failed to create dummy user: {e}"}, 500
 

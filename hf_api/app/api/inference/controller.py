@@ -49,7 +49,7 @@ class Inference(Resource):
     @ns.response(200, "Success", inference_result_model)
     @ns.doc(security="Bearer")
     @token_required
-    def get(user_id):
+    def get(user_id, self):
         """Get inference result by inference id"""
         inference_uuid = request.args.get("uuid")
         inference_result = {
@@ -67,7 +67,7 @@ class Inference(Resource):
     @ns.response(200, "Success", inference_model)
     @ns.doc(security="Bearer")
     @token_required
-    def post(user_id):
+    def post(user_id, self):
         """Post an inference job"""
         # Process the JSON data here
         # You can perform any required operations
@@ -137,7 +137,7 @@ class Inference(Resource):
     @ns.response(200, "Success")
     @ns.doc(security="Bearer")
     @token_required
-    def delete(user_id):
+    def delete(user_id, self):
         """Delete the inference based on inference id and returns 200 if success"""
         inference_uuid = request.args.get("uuid")
 

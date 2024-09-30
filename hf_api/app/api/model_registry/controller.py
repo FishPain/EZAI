@@ -62,7 +62,7 @@ class ModelRegistry(Resource):
     @ns.response(200, "Success", get_fields)
     @ns.doc(security="Bearer")
     @token_required
-    def get(user_id):
+    def get(user_id, self):
         """
         Get Model Registry Infomation by UUID
         """
@@ -85,7 +85,7 @@ class ModelRegistry(Resource):
     @ns.response(200, "Success", post_fields)
     @ns.doc(security="Bearer")
     @token_required
-    def post(user_id):
+    def post(user_id, self):
         """
         Create a sagemaker endpoint for the model
         """
@@ -104,7 +104,7 @@ class ModelRegistry(Resource):
     @ns.response(200, "Success")
     @ns.doc(security="Bearer")
     @token_required
-    def delete(user_id):
+    def delete(user_id, self):
         """
         Delete a model from s3 and db by UUID
         """
@@ -153,7 +153,7 @@ class ModelRegistryStatus(Resource):
     @ns.response(200, "Success", get_status_fields)
     @ns.doc(security="Bearer")
     @token_required
-    def get(user_id):
+    def get(user_id, self):
         """
         Get Model Registry Job by UUID
         """
