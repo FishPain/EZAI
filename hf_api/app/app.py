@@ -28,17 +28,17 @@ def init_app():
 
     os.environ["SECRET_KEY"] = secrets.token_urlsafe(16)
 
-    app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
     # Register application endpoints using Blueprint
     blueprint = Blueprint("api", __name__, url_prefix=f"/{app_constants.API_VERSION}")
 
     authorizations = {
-        'Bearer': {
-            'type': 'apiKey',
-            'in': 'header',
-            'name': 'Authorization',
-            'description': 'Enter "Bearer <token>"'
+        "Bearer": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "Authorization",
+            "description": 'Enter "Bearer <token>"',
         }
     }
 
@@ -47,8 +47,8 @@ def init_app():
         title=app_constants.SERVICE_NAME,
         version=app_constants.API_VERSION,
         description=app_constants.SERVICE_DESCRIPTION,
-        doc="/docs/", 
-        authorizations=authorizations
+        doc="/docs/",
+        authorizations=authorizations,
     )
 
     register_namespaces(api)
@@ -80,6 +80,10 @@ def init_app():
     @app.route("/")
     def index():
         return render_template("index.html")
+
+    @app.route("/example")
+    def example():
+        return render_template("example.html")
 
     @app.route("/health")
     def health():

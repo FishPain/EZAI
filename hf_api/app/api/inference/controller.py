@@ -78,7 +78,7 @@ class Inference(Resource):
             role=sm_constants.ROLE,
             bucket_name=sm_constants.BUCKET_NAME,
         )
-
+        
         if json_data and model_registry_uuid and json_data.filename.endswith(".json"):
             model_endpoint = ModelRegistryModel.get_record_by_uuid(
                 model_registry_uuid
