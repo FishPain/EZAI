@@ -77,9 +77,13 @@ def init_app():
         return data, err.code
 
     # Add route for the HTML page
-    @app.route("/")
+    @app.route("/signin")
     def index():
-        return render_template("index.html")
+        return render_template("signin.html")
+    
+    @app.route("/signup")
+    def signup():
+        return render_template("signup.html")
 
     @app.route("/example")
     def example():
@@ -88,6 +92,10 @@ def init_app():
     @app.route("/health")
     def health():
         return {"status": "healthy"}, 200
+    
+    @app.route("/main")
+    def main():
+        return render_template("main.html")
 
     # add more routes here
     return app

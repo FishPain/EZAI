@@ -31,9 +31,12 @@ class UserModel(Base):
     @staticmethod
     def create_user(username, email, password):
         # if user exists, raise an exception
-        if UserModel.get_user_by_email(email):
+        if (
+            UserModel.get_user_by_email(email) or 
+            UserModel.get_user_by_username(username)
+        ):
             raise Exception("User already exists")
-
+        
         new_user = UserModel(username=username, email=email, password=password)
 
         session.add(new_user)
@@ -43,6 +46,10 @@ class UserModel(Base):
     @staticmethod
     def get_user_by_email(email):
         return session.query(UserModel).filter_by(email=email).first()
+
+    @staticmethod
+    def get_user_by_username(username):
+        return session.query(UserModel).filter_by(username=username).first()
 
     @staticmethod
     def get_hashed_password_by_username(username):

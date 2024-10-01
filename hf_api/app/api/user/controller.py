@@ -33,10 +33,11 @@ response_model = ns.model(
 class UserSignup(Resource):
     @ns.expect(user_signup_parser)
     @ns.response(200, "Success", response_model)
+    @ns.response(400, "Email already registered")  # New response code for email conflict
     def post(self):
         """Sign up a new user"""
         try:
-            # Extract data from JSON body
+            # Extract data from query parameters
             data = request.args
             username = data.get("username")
             email = data.get("email")
