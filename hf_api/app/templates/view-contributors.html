@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Contributor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        nav {
+            display: flex;
+            align-items: center;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            display: block;
+            transition: color 0.3s;
+            position: relative;
+        }
+        nav a:hover {
+            color: #ddd;
+        }
+        nav a.active {
+            color: #ddd;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: space-around;
+            flex-grow: 1;
+        }
+        
+        .filter-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .filter-container label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .filter-container select {
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-right: 10px; /* Add margin for spacing */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+            word-wrap: break-word;
+            cursor: pointer;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        th span {
+            font-size: 12px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-links">
+            <a href="/view-models">View Models</a>
+            <a href="/view-contributors" class="active">Top Model Contributor</a>
+        </div>
+    </nav>
+    
+    <!-- Filter Section -->
+    <div class="filter-container">
+        <div class="filter-item">
+            <label for="contributorTypeFilter">Contributor Type:</label>
+            <select id="contributorTypeFilter" onchange="filterContributors()">
+                <option value="all">All Types</option>
+                <option value="Individual">Individual</option>
+                <option value="Team">Team</option>
+            </select>
+        </div>
+        <div class="filter-item">
+            <label for="contributionFilter">Min Contributions:</label>
+            <select id="contributionFilter" onchange="filterContributors()">
+                <option value="0">0</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+                <option value="25">25</option>
+            </select>
+        </div>
+        <div class="filter-item">
+            <label for="streakFilter">Min Day Streak:</label>
+            <select id="streakFilter" onchange="filterContributors()">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="3">3</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+            </select>
+        </div>
+    </div>
+
+    <table id="contributorTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">Rank <span id="sortIndicator0">▼</span></th>
+                <th onclick="sortTable(1)">Contributor Name <span id="sortIndicator1">▼</span></th>
+                <th onclick="sortTable(2)">Contributor Type <span id="sortIndicator2">▼</span></th>
+                <th onclick="sortTable(3)">Number of Contributions <span id="sortIndicator3">▼</span></th>
+                <th onclick="sortTable(4)">Day Streak of Contributions <span id="sortIndicator4">▼</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Contributor data will be populated here -->
+        </tbody>
+    </table>
+
+    <script>
+        const contributors = [
+            {
+                rank: 1,
+                name: "Alice Johnson",
+                type: "Individual",
+                contributions: 30,
+                streak: 15
+            },
+            {
+                rank: 2,
+                name: "Bob Smith",
+                type: "Team",
+                contributions: 25,
+                streak: 10
+            },
+            {
+                rank: 3,
+                name: "Charlie Brown",
+                type: "Individual",
+                contributions: 20,
+                streak: 5
+            },
+            {
+                rank: 4,
+                name: "David Wilson",
+                type: "Team",
+                contributions: 15,
+                streak: 8
+            },
+            {
+                rank: 5,
+                name: "Eva White",
+                type: "Individual",
+                contributions: 10,
+                streak: 3
+            },
+            {
+                rank: 6,
+                name: "Fatima Khan",
+                type: "Individual",
+                contributions: 18,
+                streak: 7
+            },
+            {
+                rank: 7,
+                name: "George Lee",
+                type: "Team",
+                contributions: 22,
+                streak: 6
+            },
+            {
+                rank: 8,
+                name: "Hannah Patel",
+                type: "Individual",
+                contributions: 16,
+                streak: 4
+            },
+            {
+                rank: 9,
+                name: "Isaac Chen",
+                type: "Team",
+                contributions: 28,
+                streak: 12
+            },
+            {
+                rank: 10,
+                name: "Jasmine Rodriguez",
+                type: "Individual",
+                contributions: 14,
+                streak: 5
+            },
+            {
+                rank: 11,
+                name: "Karan Singh",
+                type: "Team",
+                contributions: 12,
+                streak: 9
+            },
+            {
+                rank: 12,
+                name: "Lina Wu",
+                type: "Individual",
+                contributions: 19,
+                streak: 2
+            },
+            {
+                rank: 13,
+                name: "Michael Brown",
+                type: "Team",
+                contributions: 11,
+                streak: 1
+            },
+            {
+                rank: 14,
+                name: "Nia Cooper",
+                type: "Individual",
+                contributions: 21,
+                streak: 8
+            },
+            {
+                rank: 15,
+                name: "Oscar Davis",
+                type: "Team",
+                contributions: 24,
+                streak: 3
+            },
+            {
+                rank: 16,
+                name: "Priya Sharma",
+                type: "Individual",
+                contributions: 17,
+                streak: 6
+            },
+            {
+                rank: 17,
+                name: "Quincy Adams",
+                type: "Team",
+                contributions: 9,
+                streak: 2
+            },
+            {
+                rank: 18,
+                name: "Rita Thompson",
+                type: "Individual",
+                contributions: 13,
+                streak: 7
+            },
+            {
+                rank: 19,
+                name: "Sanjay Gupta",
+                type: "Team",
+                contributions: 26,
+                streak: 10
+            },
+            {
+                rank: 20,
+                name: "Tina Nguyen",
+                type: "Individual",
+                contributions: 15,
+                streak: 4
+            }
+        ];
+        // Function to populate the table with contributor data
+        function populateContributorTable() {
+            const tbody = document.getElementById('contributorTable').getElementsByTagName('tbody')[0];
+            contributors.forEach(contributor => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = contributor.rank;
+                row.insertCell(1).textContent = contributor.name;
+                row.insertCell(2).textContent = contributor.type;
+                row.insertCell(3).textContent = contributor.contributions;
+                row.insertCell(4).textContent = contributor.streak;
+            });
+        }
+
+        let lastSortedColumn = -1; // Track the last sorted column
+        const table = document.getElementById("contributorTable");
+
+        // Function to sort the table
+        function sortTable(columnIndex) {
+            const tbody = table.getElementsByTagName("tbody")[0];
+            const rows = Array.from(tbody.rows);
+            const sortIndicator = document.getElementById(`sortIndicator${columnIndex}`);
+
+            // Reset sorting direction when switching to a different column
+            if (lastSortedColumn !== columnIndex) {
+                table.dataset.sortDirection = "asc"; // Set default to ascending for a new column
+            }
+
+            const isAscending = table.dataset.sortDirection === "asc";
+            table.dataset.sortDirection = isAscending ? "desc" : "asc"; // Toggle sort direction
+
+            // Clear all sort indicators
+            document.querySelectorAll('th span').forEach(indicator => {
+                indicator.textContent = '▼'; // Reset to default arrow
+            });
+
+            // Set the current sort indicator
+            sortIndicator.textContent = isAscending ? '▲' : '▼'; // Set the arrow direction
+
+            rows.sort((rowA, rowB) => {
+                const cellA = rowA.cells[columnIndex].textContent;
+                const cellB = rowB.cells[columnIndex].textContent;
+
+                // Adjusting sorting based on the column index
+                if (columnIndex === 0) { // Sorting by Rank
+                    return isAscending ? parseInt(cellB) - parseInt(cellA) : parseInt(cellA) - parseInt(cellB); // Reverse the logic here
+                } else if (columnIndex === 3) { // Sorting by Number of Contributions
+                    return isAscending ? parseInt(cellA) - parseInt(cellB) : parseInt(cellB) - parseInt(cellA);
+                } else if (columnIndex === 4) { // Sorting by Day Streak
+                    return isAscending ? parseInt(cellA) - parseInt(cellB) : parseInt(cellB) - parseInt(cellA);
+                } else { // Sorting by Name or Type (text)
+                    return isAscending ? cellB.localeCompare(cellA) : cellA.localeCompare(cellB);
+                }
+            });
+
+            rows.forEach(row => tbody.appendChild(row)); // Re-append sorted rows
+
+            lastSortedColumn = columnIndex; // Update the last sorted column
+        }
+
+
+        // Function to filter contributors based on selected criteria
+        function filterContributors() {
+            const typeFilter = document.getElementById('contributorTypeFilter').value;
+            const minContributions = parseInt(document.getElementById('contributionFilter').value);
+            const minStreak = parseInt(document.getElementById('streakFilter').value);
+
+            const tbody = document.getElementById('contributorTable').getElementsByTagName('tbody')[0];
+            const rows = tbody.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const type = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+                const contributions = parseInt(rows[i].getElementsByTagName('td')[3].textContent);
+                const streak = parseInt(rows[i].getElementsByTagName('td')[4].textContent);
+
+                let showRow = true;
+
+                // Filter by type
+                if (typeFilter !== 'all' && type !== typeFilter.toLowerCase()) {
+                    showRow = false;
+                }
+
+                // Filter by contributions
+                if (contributions < minContributions) {
+                    showRow = false;
+                }
+
+                // Filter by streak
+                if (streak < minStreak) {
+                    showRow = false;
+                }
+
+                rows[i].style.display = showRow ? '' : 'none'; // Show or hide row
+            }
+        }
+
+        // Call the function to populate the table
+        populateContributorTable();
+    </script>
+</body>
+</html>

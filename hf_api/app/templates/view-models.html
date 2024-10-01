@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trending Model</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        nav {
+            display: flex;
+            align-items: center;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            display: block;
+            transition: color 0.3s;
+            position: relative;
+        }
+        nav a:hover {
+            color: #ddd;
+        }
+        nav a::after {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 2px;
+            background-color: #aaa;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+        nav a:hover::after {
+            transform: scaleX(1);
+        }
+        nav a.active {
+            color: #ddd;
+        }
+        nav a.active::after {
+            transform: scaleX(1);
+        }
+        .nav-links {
+            display: flex;
+            justify-content: space-around;
+            flex-grow: 1;
+        }
+        
+        .filter-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .filter-container label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .filter-container select {
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+            word-wrap: break-word;
+            cursor: pointer;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        th span {
+            font-size: 12px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-links">
+            <a href="/view-models">View Models</a>
+            <a href="/view-contributors">Top Model Contributor</a>
+        </div>
+    </nav>
+    
+    <!-- Filter Section -->
+    <div class="filter-container">
+        <div class="filter-item">
+            <label for="modelTypeFilter">Model Type:</label>
+            <select id="modelTypeFilter" onchange="filterModels()">
+                <option value="all">All Types</option>
+                <option value="classification">Classification</option>
+                <option value="regression">Regression</option>
+                <option value="clustering">Clustering</option>
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label for="recommendFilter">Recommend:</label>
+            <select id="recommendFilter" onchange="filterModels()">
+                <option value="all">All</option>
+                <option value="1">⭐</option>
+                <option value="2">⭐⭐</option>
+                <option value="3">⭐⭐⭐</option>
+                <option value="4">⭐⭐⭐⭐</option>
+                <option value="5">⭐⭐⭐⭐⭐</option>
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label for="downloadFilter">Download Count:</label>
+            <select id="downloadFilter" onchange="filterModels()">
+                <option value="all">All</option>
+                <option value="0-500">0-500</option>
+                <option value="500-1000">500-1000</option>
+                <option value="1000-1500">1000-1500</option>
+                <option value="1500+">1500+</option>
+            </select>
+        </div>
+    </div>
+
+    <table id="modelTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">Model Name <span id="sortIndicator0">▼</span></th>
+                <th onclick="sortTable(1)">Model Type <span id="sortIndicator1">▼</span></th>
+                <th onclick="sortTable(2)">Upload Date <span id="sortIndicator2">▼</span></th>
+                <th onclick="sortTable(3)">Recommend <span id="sortIndicator3">▼</span></th>
+                <th onclick="sortTable(4)">Download <span id="sortIndicator4">▼</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Model data will be populated here -->
+        </tbody>
+    </table>
+
+    <script>
+        const models = [
+            {
+                name: "Model A",
+                type: "Classification",
+                uploadDateTime: "2024-09-30",
+                recommend: "⭐⭐⭐⭐⭐",
+                downloads: 1500
+            },
+            {
+                name: "Model B",
+                type: "Regression",
+                uploadDateTime: "2024-09-29",
+                recommend: "⭐⭐⭐",
+                downloads: 850
+            },
+            {
+                name: "Model C",
+                type: "Clustering",
+                uploadDateTime: "2024-09-28",
+                recommend: "⭐",
+                downloads: 200
+            },
+            {
+                name: "Model D",
+                type: "Clustering",
+                uploadDateTime: "2024-09-28",
+                recommend: "⭐⭐",
+                downloads: 400
+            },
+            {
+                name: "Model E",
+                type: "Classification",
+                uploadDateTime: "2024-09-27",
+                recommend: "⭐⭐⭐⭐",
+                downloads: 1200
+            },
+            {
+                name: "Model F",
+                type: "Regression",
+                uploadDateTime: "2024-09-26",
+                recommend: "⭐⭐⭐⭐⭐",
+                downloads: 1800
+            },
+            {
+                name: "Model G",
+                type: "Clustering",
+                uploadDateTime: "2024-09-25",
+                recommend: "⭐⭐",
+                downloads: 300
+            },
+            {
+                name: "Model H",
+                type: "Classification",
+                uploadDateTime: "2024-09-24",
+                recommend: "⭐⭐⭐⭐⭐",
+                downloads: 2500
+            },
+            {
+                name: "Model I",
+                type: "Regression",
+                uploadDateTime: "2024-09-23",
+                recommend: "⭐⭐⭐⭐",
+                downloads: 600
+            },
+            {
+                name: "Model J",
+                type: "Clustering",
+                uploadDateTime: "2024-09-22",
+                recommend: "⭐⭐",
+                downloads: 150
+            },
+            {
+                name: "Model K",
+                type: "Classification",
+                uploadDateTime: "2024-09-21",
+                recommend: "⭐⭐⭐⭐",
+                downloads: 950
+            },
+            {
+                name: "Model L",
+                type: "Regression",
+                uploadDateTime: "2024-09-20",
+                recommend: "⭐⭐⭐",
+                downloads: 400
+            },
+            {
+                name: "Model M",
+                type: "Clustering",
+                uploadDateTime: "2024-09-19",
+                recommend: "⭐⭐⭐⭐⭐",
+                downloads: 2000
+            },
+            {
+                name: "Model N",
+                type: "Classification",
+                uploadDateTime: "2024-09-18",
+                recommend: "⭐",
+                downloads: 100
+            },
+            {
+                name: "Model O",
+                type: "Regression",
+                uploadDateTime: "2024-09-17",
+                recommend: "⭐⭐⭐⭐",
+                downloads: 800
+            },
+            {
+                name: "Model P",
+                type: "Clustering",
+                uploadDateTime: "2024-09-16",
+                recommend: "⭐⭐⭐",
+                downloads: 500
+            },
+            {
+                name: "Model Q",
+                type: "Classification",
+                uploadDateTime: "2024-09-15",
+                recommend: "⭐⭐⭐⭐⭐",
+                downloads: 2200
+            },
+            {
+                name: "Model R",
+                type: "Regression",
+                uploadDateTime: "2024-09-14",
+                recommend: "⭐⭐",
+                downloads: 350
+            },
+            {
+                name: "Model S",
+                type: "Clustering",
+                uploadDateTime: "2024-09-13",
+                recommend: "⭐⭐⭐⭐",
+                downloads: 900
+            },
+            {
+                name: "Model T",
+                type: "Classification",
+                uploadDateTime: "2024-09-12",
+                recommend: "⭐⭐⭐⭐⭐",
+                downloads: 1300
+            }
+        ];
+
+
+
+        // Function to populate the table with model data
+        function populateModelTable() {
+            const tbody = document.getElementById('modelTable').getElementsByTagName('tbody')[0];
+            models.forEach(model => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = model.name;
+                row.insertCell(1).textContent = model.type;
+                row.insertCell(2).textContent = model.uploadDateTime;
+                row.insertCell(3).textContent = model.recommend;
+                row.insertCell(4).textContent = model.downloads;
+            });
+        }
+
+        let lastSortedColumn = -1; // Track the last sorted column
+
+        // Function to sort the table
+        function sortTable(columnIndex) {
+            const table = document.getElementById("modelTable");
+            const tbody = table.getElementsByTagName("tbody")[0];
+            const rows = Array.from(tbody.rows);
+            const sortIndicator = document.getElementById(`sortIndicator${columnIndex}`);
+
+            // Reset sorting direction when switching to a different column
+            if (lastSortedColumn !== columnIndex) {
+                table.dataset.sortDirection = "asc"; // Set default to ascending for a new column
+            }
+
+            const isAscending = table.dataset.sortDirection === "asc";
+            table.dataset.sortDirection = isAscending ? "desc" : "asc"; // Toggle sort direction
+
+            // Clear all sort indicators
+            document.querySelectorAll('th span').forEach(indicator => {
+                indicator.textContent = '▼'; // Reset to default arrow
+            });
+
+            // Set the current sort indicator
+            sortIndicator.textContent = isAscending ? '▲' : '▼'; // Set the arrow direction
+
+            rows.sort((rowA, rowB) => {
+                const cellA = rowA.cells[columnIndex].textContent;
+                const cellB = rowB.cells[columnIndex].textContent;
+
+                if (columnIndex === 2) { // Sorting by date (Upload DateTime)
+                    return isAscending ? new Date(cellA) - new Date(cellB) : new Date(cellB) - new Date(cellA);
+                } else if (columnIndex === 3) { // Sorting by popularity (stars)
+                    const popularityA = cellA.split('⭐').length - 1; // Count stars for popularity
+                    const popularityB = cellB.split('⭐').length - 1;
+                    return isAscending ? popularityA - popularityB : popularityB - popularityA;
+                } else if (columnIndex === 4) { // Sorting by downloads (numbers)
+                    return isAscending ? parseInt(cellA) - parseInt(cellB) : parseInt(cellB) - parseInt(cellA);
+                } else { // Sorting by name or type (text)
+                    return isAscending ? cellB.localeCompare(cellA) : cellA.localeCompare(cellB);
+                }
+            });
+
+            rows.forEach(row => tbody.appendChild(row)); // Re-append sorted rows
+
+            lastSortedColumn = columnIndex; // Update the last sorted column
+        }
+        
+        function filterModels() {
+            const typeFilter = document.getElementById('modelTypeFilter').value;
+            const recommendFilter = document.getElementById('recommendFilter').value;
+            const downloadFilter = document.getElementById('downloadFilter').value;
+
+            const tbody = document.getElementById('modelTable').getElementsByTagName('tbody')[0];
+            const rows = tbody.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const type = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                const recommend = rows[i].getElementsByTagName('td')[3].textContent.split('⭐').length - 1;
+                const downloads = parseInt(rows[i].getElementsByTagName('td')[4].textContent);
+
+                let showRow = true;
+
+                // Filter by type
+                if (typeFilter !== 'all' && type !== typeFilter) {
+                    showRow = false;
+                }
+
+                // Filter by recommend
+                if (recommendFilter !== 'all' && parseInt(recommendFilter) !== recommend) {
+                    showRow = false;
+                }
+
+                // Filter by downloads
+                if (downloadFilter !== 'all') {
+                    const [min, max] = downloadFilter.split('-').map(val => (val === '1500+' ? 1500 : parseInt(val)));
+                    if (!(downloads >= min && (max === undefined || downloads <= max))) {
+                        showRow = false;
+                    }
+                }
+
+                rows[i].style.display = showRow ? '' : 'none';
+            }
+        }
+
+        // Call the function to populate the table
+        populateModelTable();
+    </script>
+</body>
+</html>
