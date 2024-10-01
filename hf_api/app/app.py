@@ -77,9 +77,13 @@ def init_app():
         return data, err.code
 
     # Add route for the HTML page
-    @app.route("/")
+    @app.route("/signin")
     def index():
-        return render_template("index.html")
+        return render_template("signin.html")
+    
+    @app.route("/signup")
+    def signup():
+        return render_template("signup.html")
 
     @app.route("/main")
     def main():
