@@ -11,7 +11,13 @@ get_parser.add_argument("uuid", type=str, required=True, help="The model UUID")
 
 upload_parser = ns.parser()
 upload_parser.add_argument(
-    "file", location="files", type="file", required=True, help="A tar.gz file"
+    "file", location="files", type="file", required=True, help="A tar.gz file",
+) 
+upload_parser.add_argument(
+    "model_name",
+    type=str,
+    required=True,
+    help="The model Name",
 )
 
 delete_parser = ns.parser()
@@ -76,8 +82,9 @@ class ModelManager(Resource):
         Upload a model to S3 and returns the model UUID and S3 path
         """
         uploaded_file = request.files["file"]
+        model_name = request.args.get("model_name")
         try:
-            resp = push_to_s3(uploaded_file)
+            resp = push_to_s3(uploaded_file, model_name)
         except Exception as e:
             return {"message": f"Failed to upload the model to S3: {e}"}, 500
 

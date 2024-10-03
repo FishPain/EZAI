@@ -88,6 +88,10 @@ def init_app():
     @app.route("/example")
     def example():
         return render_template("example.html")
+    
+    @app.route("/model")
+    def upload_m():
+        return render_template("model.html")
 
     @app.route("/health")
     def health():

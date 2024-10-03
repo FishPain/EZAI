@@ -72,7 +72,7 @@ class MLModel(Base):
     model_type = Column(String(80), nullable=True)
     s3_url = Column(String(200), unique=True, nullable=False)
 
-    def __init__(self, user_uuid, model_name, model_type, s3_url):
+    def __init__(self, user_uuid, model_name, model_type, s3_url, tag):
         self.user_uuid = user_uuid
         self.model_name = model_name
         self.model_type = model_type
