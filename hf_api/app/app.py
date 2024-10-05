@@ -98,7 +98,7 @@ def init_app():
         return render_template("main.html")
     
     @app.route("/profile")
-    def main():
+    def profile():
         return render_template("profile.html")
 
     # add more routes here
