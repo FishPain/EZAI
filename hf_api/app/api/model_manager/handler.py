@@ -6,6 +6,7 @@ from app.constants import SageMakerConstants as sm_constants
 from app.constants import AppConstants as app_constants
 from app.models.models import MLModel, InferenceModel, get_model_run_counts_with_details
 
+
 def get_all_models(user_uuid: str = None) -> dict:
     """
     If user_uuid is provided, return all models associated with the user.
@@ -16,12 +17,10 @@ def get_all_models(user_uuid: str = None) -> dict:
             models = MLModel.get_all_models_by_user_uuid(user_uuid)
         else:
             models = get_model_run_counts_with_details()
-        
-        models_dict = [model.to_dict() for model in models]
 
         resp = {
             "message": "Successfully fetched all models",
-            "body": models_dict,
+            "body": models,
         }
     except Exception as e:
         raise Exception(f"Failed to fetch all models: {e}")

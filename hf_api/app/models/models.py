@@ -352,4 +352,16 @@ def get_model_run_counts_with_details():
         .all()
     )
 
-    return model_run_counts
+    resp = []
+    for model in model_run_counts:
+        model_dict = {
+            "model_registry_uuid": model.model_registry_uuid,
+            "model_version": model.model_version,
+            "run_count": model.run_count,
+            "model_name": model.model_name,
+            "model_type": model.model_type,
+            "upload_datetime": model.upload_datetime.isoformat(),
+        }
+        resp.append(model_dict)
+
+    return resp

@@ -4,159 +4,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trending Model</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-
-        nav {
-            display: flex;
-            align-items: center;
-            background-color: #333;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        nav a {
-            color: white;
-            text-decoration: none;
-            padding: 14px 20px;
-            font-size: 16px;
-            display: block;
-            transition: color 0.3s;
-            position: relative;
-        }
-
-        nav a:hover {
-            color: #ddd;
-        }
-
-        nav a::after {
-            content: '';
-            display: block;
-            width: 100%;
-            height: 2px;
-            background-color: #aaa;
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            transform: scaleX(0);
-            transition: transform 0.3s;
-        }
-
-        nav a:hover::after {
-            transform: scaleX(1);
-        }
-
-        nav a.active {
-            color: #ddd;
-        }
-
-        nav a.active::after {
-            transform: scaleX(1);
-        }
-
-        .nav-links {
-            display: flex;
-            justify-content: space-around;
-            flex-grow: 1;
-        }
-
-        .filter-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-
-        .filter-container label {
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        .filter-container select {
-            padding: 8px;
-            font-size: 14px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        .filter-item {
-            display: flex;
-            align-items: center;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-top: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        th,
-        td {
-            padding: 15px;
-            border: 1px solid #ddd;
-            text-align: center;
-            word-wrap: break-word;
-            cursor: pointer;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
-        th span {
-            font-size: 12px;
-            margin-left: 5px;
-        }
-    </style>
+    <title>Model</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body>
-    <nav>
-        <div class="nav-links">
-            <a href="/view-models">View Models</a>
-            <a href="/view-contributors">Top Model Contributor</a>
-        </div>
-    </nav>
+    <div class="container-fluid">
+        <div class="row mx-5 my-5">
+            <div class="col-md-1 col-lg-2 d-md-block bg-light sidebar p-4">
+                <h4 class="text-center mb-4">Filters</h4>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" id="allCheckbox" onchange="filterModels()">
+                        <label class="form-check-label" for="allCheckbox">All Types</label>
+                    </li>
+                    <li class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" id="tensorflowCheckbox"
+                            onchange="filterModels()">
+                        <label class="form-check-label" for="tensorflowCheckbox">TensorFlow</label>
+                    </li>
+                    <li class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" id="pytorchCheckbox"
+                            onchange="filterModels()">
+                        <label class="form-check-label" for="pytorchCheckbox">PyTorch</label>
+                    </li>
+                </ul>
+            </div>
 
-    <!-- Filter Section -->
-    <div class="filter-container">
-        <div class="filter-item">
-            <label for="modelTypeFilter">Model Type:</label>
-            <select id="modelTypeFilter" onchange="filterModels()">
-                <option value="all">All Types</option>
-                <option value="tensorflow">TensorFlow</option>
-                <option value="pytorch">PyTorch</option>
-            </select>
+
+            <!-- Main content area -->
+            <main class="col-md-8 ms-sm-auto col-lg-8 px-md-4">
+                <div class="container border p-4 bg-white shadow rounded">
+                    <div class="container mb-4">
+                        <ul class="nav nav-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="#">View Models</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/view-contributors">Top Model Contributors</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="container">
+                        <table class="table table-striped table-hover" id="modelTable">
+                            <thead>
+                                <tr>
+                                    <th onclick="sortTable(0)" scope="col">Model Name</th>
+                                    <th onclick="sortTable(1)" scope="col">Model Type</th>
+                                    <th onclick="sortTable(2)" scope="col">Model Version</th>
+                                    <th onclick="sortTable(3)" scope="col">Upload Date</th>
+                                    <th onclick="sortTable(4)" scope="col">Inference Counts</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                <!-- Model data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+            <!-- Sidebar for filtering -->
+            <div class="col-md-1 col-lg-2">
+
+            </div>
+
         </div>
     </div>
 
-    <table id="modelTable">
-        <thead>
-            <tr>
-                <th onclick="sortTable(0)">Model Name <span id="sortIndicator0">▼</span></th>
-                <th onclick="sortTable(1)">Model Type <span id="sortIndicator1">▼</span></th>
-                <th onclick="sortTable(2)">Upload Date <span id="sortIndicator2">▼</span></th>
-                <th>S3 URL</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Model data will be populated here -->
-        </tbody>
-    </table>
+    <!-- Bootstrap 5 JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         let models = [];
@@ -185,22 +103,30 @@
 
             modelData.forEach(model => {
                 const row = tbody.insertRow();
+                row.setAttribute('scope', 'row');
                 row.insertCell(0).textContent = model.model_name;
                 row.insertCell(1).textContent = model.model_type;
-                row.insertCell(2).textContent = new Date(model.upload_datetime).toLocaleDateString();
-                row.insertCell(3).innerHTML = `<a href="${model.s3_url}" target="_blank">${model.s3_url}</a>`;
+                row.insertCell(2).textContent = model.model_version;
+                row.insertCell(3).textContent = new Date(model.upload_datetime).toLocaleDateString();
+                row.insertCell(4).textContent = model.run_count;
             });
         }
 
-        // Function to filter the table based on the selected model type
+        // Function to filter the table based on selected checkboxes
         function filterModels() {
-            const typeFilter = document.getElementById('modelTypeFilter').value.toLowerCase();
+            const allCheckbox = document.getElementById('allCheckbox').checked;
+            const tensorflowCheckbox = document.getElementById('tensorflowCheckbox').checked;
+            const pytorchCheckbox = document.getElementById('pytorchCheckbox').checked;
 
             const filteredModels = models.filter(model => {
-                if (typeFilter === 'all') {
-                    return true; // Show all models
+                // If 'All Types' checkbox is checked, return all models
+                if (allCheckbox) {
+                    return true;
                 }
-                return model.model_type.toLowerCase() === typeFilter;
+                // Otherwise, filter based on the selected model types
+                const modelType = model.model_type.toLowerCase();
+                return (tensorflowCheckbox && modelType === 'tensorflow') ||
+                    (pytorchCheckbox && modelType === 'pytorch');
             });
 
             populateModelTable(filteredModels); // Re-populate the table with filtered data
@@ -222,7 +148,7 @@
                 const cellA = rowA.cells[columnIndex].textContent.toLowerCase();
                 const cellB = rowB.cells[columnIndex].textContent.toLowerCase();
 
-                if (columnIndex === 2) { // Sorting by date
+                if (columnIndex === 4) { // Sorting by date
                     return sortDirection === "asc"
                         ? new Date(cellA) - new Date(cellB)
                         : new Date(cellB) - new Date(cellA);
