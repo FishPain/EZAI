@@ -89,7 +89,7 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    // If login is successful, redirect to the main page
+                    localStorage.setItem('authToken', data.token);
                     window.location.href = '/main';
                 } else {
                     // If login fails, show error message

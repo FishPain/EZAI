@@ -80,9 +80,20 @@
         let models = [];
 
         // Fetch data from the API and populate the table
+        // 
+        // Note: The API endpoint is protected by JWT authentication. 
+        // To access it, you need to include the JWT token in the request headers.
+        // {
+        //     method: 'GET',
+        //         headers: {
+        //         'Content-Type': 'application/json',
+        //             "Authorization": "Bearer " + localStorage.getItem('authToken')
+        //     }
+        // }
+
         async function fetchModelData() {
             try {
-                const response = await fetch('http://localhost:5001/v1/api/model_manager/all');
+                const response = await fetch('/v1/api/model_manager/all');
                 const data = await response.json();
 
                 if (data.body && data.body.body) {
