@@ -4,7 +4,29 @@ from werkzeug.datastructures import FileStorage
 from app.core.SagemakerManager import SagemakerManager
 from app.constants import SageMakerConstants as sm_constants
 from app.constants import AppConstants as app_constants
-from app.models.models import MLModel
+from app.models.models import MLModel, InferenceModel, get_model_run_counts_with_details
+
+def get_all_models(user_uuid: str = None) -> dict:
+    """
+    If user_uuid is provided, return all models associated with the user.
+    If user_uuid is not provided, return all models.
+    """
+    try:
+        if user_uuid:
+            models = MLModel.get_all_models_by_user_uuid(user_uuid)
+        else:
+            models = get_model_run_counts_with_details()
+        
+        models_dict = [model.to_dict() for model in models]
+
+        resp = {
+            "message": "Successfully fetched all models",
+            "body": models_dict,
+        }
+    except Exception as e:
+        raise Exception(f"Failed to fetch all models: {e}")
+
+    return resp
 
 
 def download_from_s3(model_uuid: str) -> dict:
@@ -28,7 +50,7 @@ def download_from_s3(model_uuid: str) -> dict:
     return resp
 
 
-def push_to_s3(model: FileStorage) -> dict:
+def push_to_s3(user_uuid: str, model: FileStorage) -> dict:
     bucket_name = sm_constants.BUCKET_NAME
     role = sm_constants.ROLE
     sm = SagemakerManager(bucket_name, role)
@@ -53,7 +75,10 @@ def push_to_s3(model: FileStorage) -> dict:
         s3_path = sm.upload_to_s3(file_path, model.filename)
         model_type = "tensorflow"  # TODO: Add support for other model types
         model_uuid = MLModel.save_model_to_db(
-            model_name=model.filename, model_type=model_type, s3_url=s3_path
+            user_uuid=user_uuid,
+            model_name=model.filename,
+            model_type=model_type,
+            s3_url=s3_path,
         )
 
         resp = {
