@@ -13,6 +13,7 @@ from app.constants import InstanceType as instance_type
 from app.constants import SageMakerConstants as sm_constants
 from app.core.SagemakerManager import SagemakerManager
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
@@ -22,8 +23,10 @@ broker_url = os.getenv("RABBITMQ_URI")
 worker = Celery("model_registry_worker", broker=broker_url)
 
 
-@worker.task
-def register_model_worker(model_uuid: str) -> tuple:
+@worker.task(bind=True)
+def register_model_worker(self, user_uuid: str, model_uuid: str) -> tuple:
+    self.request.kwargs = {"user_uuid": user_uuid}
+
     sm = SagemakerManager(bucket_name=sm_constants.BUCKET_NAME, role=sm_constants.ROLE)
     record = MLModel.get_record_by_uuid(model_uuid)
     model = sm.create_model(model_path=record.s3_url, model_type=record.model_type)
@@ -41,20 +44,17 @@ def register_model_worker(model_uuid: str) -> tuple:
 
 @task_prerun.connect
 def task_prerun_handler(task_id, task, *args, **kwargs):
-    # mock session user
-    user_uuid = UserModel.get_user_by_email("dummyUser@dummy.com").user_uuid
-    JobsModel.save_job_to_db(
-        job_uuid=task_id,
-        user_uuid=user_uuid,
-        job_type="model_registry",
-        job_status=states.PENDING,
-        reference_uuid=None,
-    )
-
-
-@task_postrun.connect
-def task_postrun_handler(task_id, task, *args, **kwargs):
-    JobsModel.update_task_status(task_id, states.STARTED)
+    user_uuid = kwargs["args"][0]
+    if user_uuid:
+        JobsModel.save_job_to_db(
+            job_uuid=task_id,
+            user_uuid=user_uuid,
+            job_type="model_registry",
+            job_status=states.STARTED,
+            reference_uuid=None,
+        )
+    else:
+        logging.error("User UUID is missing")
 
 
 @task_success.connect

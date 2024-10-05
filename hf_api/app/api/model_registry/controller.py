@@ -69,6 +69,9 @@ class ModelRegistry(Resource):
         model_registry_uuid = request.args.get("uuid")
         record = ModelRegistryModel.get_record_by_uuid(model_registry_uuid)
 
+        if not record:
+            return {"message": "Model not found"}, 404
+
         resp = {
             "message": "Model retrieved successfully",
             "body": {
@@ -92,7 +95,7 @@ class ModelRegistry(Resource):
 
         model_uuid = request.args.get("uuid")
 
-        task_id = register_model(model_uuid)
+        task_id = register_model(user_id, model_uuid)
 
         resp = {
             "message": "Model endpoint creation started",
@@ -159,6 +162,9 @@ class ModelRegistryStatus(Resource):
         """
         job_uuid = request.args.get("uuid")
         record = JobsModel.get_record_by_uuid(job_uuid)
+
+        if not record:
+            return {"message": "Job not found"}, 404
 
         resp = {
             "message": "Job status retrieved successfully",

@@ -85,6 +85,18 @@ def init_app():
     def signup():
         return render_template("signup.html")
 
+    @app.route("/main")
+    def main():
+        return render_template("main.html")
+        
+    @app.route("/view-models")
+    def view_model():
+        return render_template("view-models.html")
+
+    @app.route("/view-contributors")
+    def view_contributor():
+        return render_template("view-contributors.html")
+    
     @app.route("/example")
     def example():
         return render_template("example.html")
@@ -93,10 +105,6 @@ def init_app():
     def health():
         return {"status": "healthy"}, 200
     
-    @app.route("/main")
-    def main():
-        return render_template("main.html")
-
     # add more routes here
     return app
 

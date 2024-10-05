@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full-Screen Half-and-Half Navigation Bar</title>
+    <style>
+        body {
+            margin: 0; /* Remove default margin */
+            height: 100vh; /* Full viewport height */
+            display: flex; /* Use flexbox for layout */
+        }
+        nav {
+            display: flex; /* Use flexbox for layout */
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+        }
+        nav a {
+            flex: 1; /* Each link takes equal space */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            color: white;
+            text-decoration: none;
+            font-size: 24px; /* Larger font size for visibility */
+            background-color: #333; /* Background color for the nav */
+            transition: background-color 0.3s; /* Smooth transition for background color */
+        }
+        nav a:hover {
+            background-color: #444; /* Change background color on hover */
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/view-models">View Models</a>
+        <a href="/view-contributors">Top Model Contributor</a>
+    </nav>
+</body>
+</html>

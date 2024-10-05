@@ -80,9 +80,14 @@ class Inference(Resource):
         )
         
         if json_data and model_registry_uuid and json_data.filename.endswith(".json"):
-            model_endpoint = ModelRegistryModel.get_record_by_uuid(
+            model = ModelRegistryModel.get_record_by_uuid(
                 model_registry_uuid
-            ).model_endpoint
+            )
+
+            if model is None:
+                return "Model not found", 400
+            
+            model_endpoint = model.model_endpoint
 
             base = "https://"
             host = "runtime.sagemaker.ap-southeast-1.amazonaws.com"
@@ -104,10 +109,7 @@ class Inference(Resource):
                 endpoint=inference_endpoint, payload=json_string, header=header
             )
 
-            dummy_user_uuid = UserModel.get_user_by_email(
-                "dummyUser@dummy.com"
-            ).user_uuid
-            if dummy_user_uuid is None:
+            if user_id is None:
                 raise Exception("User does not exist")
 
             inference_status = "pending"
@@ -116,7 +118,7 @@ class Inference(Resource):
                 inference_status = "completed"
 
             inference_uuid = InferenceModel.save_inference_to_db(
-                user_uuid=dummy_user_uuid,
+                user_uuid=user_id,
                 model_registry_uuid=model_registry_uuid,
                 inference_status=inference_status,
             )
