@@ -96,6 +96,10 @@ def init_app():
     @app.route("/main")
     def main():
         return render_template("main.html")
+    
+    @app.route("/profile")
+    def main():
+        return render_template("profile.html")
 
     # add more routes here
     return app

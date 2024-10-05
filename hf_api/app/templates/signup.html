@@ -66,6 +66,23 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
+            // Clear previous error message
+            errorMessage.textContent = '';
+
+            // Validate password contains both letters and numbers
+            const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{6,}$/; // At least 6 characters, letters, and numbers
+            if (!passwordRegex.test(password)) {
+                errorMessage.textContent = 'Password must be at least 6 characters long and contain both letters and numbers.';
+                return;
+            }
+
+            // Validate email ends with .com or .sg
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|sg)$/;
+            if (!emailRegex.test(email)) {
+                errorMessage.textContent = 'Incorrect Email';
+                return;
+            }
+
             try {
                 const response = await fetch('/v1/api/user/signup?username=' + encodeURIComponent(username) + '&email=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password), {
                     method: 'POST',

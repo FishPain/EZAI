@@ -82,15 +82,15 @@
             try {
                 const response = await fetch('/v1/api/user/login?email=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password), {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     // If login is successful, redirect to the main page
-                    window.location.href = 'main.html';
+                    localStorage.setItem('userToken', data.token);
+                    window.location.href = '/main';
                 } else {
                     // If login fails, show error message
                     errorMessage.textContent = 'Login failed. Please check your credentials.';
