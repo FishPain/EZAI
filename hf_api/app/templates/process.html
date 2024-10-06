@@ -14,13 +14,75 @@
             color: #333;
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
         }
 
+        /* Header styling */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background-color: #fff;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        /* Logo section */
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .logo img {
+            max-width: 40px;
+            height: auto;
+        }
+
+        /* Search bar */
+        .search-bar {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            padding: 0 20px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        .search-bar input:focus {
+            border-color: #007bff;
+        }
+
+        /* Navigation links */
+        .nav-links {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-links .btn {
+            margin-left: 10px; /* Add space between buttons */
+        }
+
+        /* Logout button */
+        .btn-logout {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+            font-weight: bold;
+        }
+
+        .btn-logout:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+
+        /* Container styles */
         .container {
             background-color: #fff;
             padding: 20px;
@@ -28,11 +90,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 80vw;
             max-width: 600px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
+            margin: 30px auto;
         }
 
         .header h1 {
@@ -74,6 +132,26 @@
 </head>
 
 <body>
+    <!-- Header section -->
+    <div class="header">
+        <!-- Left Logo Section -->
+        <div class="logo">
+            <img src="path-to-your-logo.png" alt="Logo">
+        </div>
+
+        <!-- Center Search Bar -->
+        <div class="search-bar">
+            <input type="text" placeholder="Search models...">
+        </div>
+
+        <!-- Right Navigation Links -->
+        <div class="nav-links">
+            <a href="main" class="btn btn-outline-secondary">Home</a>
+            <button id="logoutButton" class="btn btn-logout">Logout</button>
+        </div>
+    </div>
+
+    <!-- Main Container for Upload and Inference -->
     <div class="container">
         <div class="header">
             <h1>Upload Data & Trigger Inference</h1>
@@ -111,47 +189,57 @@
     </div>
 
     <script>
+        // Logout functionality
+        document.getElementById('logoutButton').addEventListener('click', function () {
+            // Clear the auth token and redirect to login page
+            localStorage.removeItem('authToken');
+            window.location.href = 'http://localhost:5001/signin';
+        });
+
         // Function to fetch models from the API and populate the model select dropdown
         function fetchModels() {
             const token = localStorage.getItem('authToken');
+            console.log('Token for model fetch:', token); // Debug: Check if token is retrieved
+
             if (!token) {
                 alert('No auth token found. Please log in.');
-                // Optionally, redirect to login page
                 window.location.href = 'http://localhost:5001/signin';
                 return;
             }
 
-            fetch('/v1/api/model_manager', {
+            fetch('/api/model_manager/all', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}` // Ensure Bearer token format
                 }
             })
             .then(response => {
+                console.log('Model fetch response status:', response.status); // Debug: Check response status
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch models');
                 }
                 return response.json();
             })
             .then(data => {
+                console.log('Models:', data); // Debug: Check the returned models data
                 const modelSelect = document.getElementById("modelSelect");
                 modelSelect.innerHTML = ''; // Clear existing options
 
                 data.forEach(model => {
                     const option = document.createElement("option");
                     option.value = model.uuid;
-                    option.textContent = model.name || model.uuid; // Use name if available
+                    option.textContent = model.name || model.uuid;
                     modelSelect.appendChild(option);
                 });
             })
             .catch(error => {
-                console.error('Error fetching models:', error);
+                console.error('Error fetching models:', error); // Log the error
                 alert("Failed to load models. Please try logging in again.");
-                // Optionally, redirect to login page
-                window.location.href = 'signin.html';
             });
         }
 
+        // Function to submit an inference job to /api/inference/
         document.getElementById("inferenceForm").addEventListener("submit", function (event) {
             event.preventDefault();
             const modelUuid = document.getElementById("modelSelect").value;
@@ -165,7 +253,6 @@
             const token = localStorage.getItem('authToken');
             if (!token) {
                 alert('No auth token found. Please log in.');
-                // Optionally, redirect to login page
                 window.location.href = 'login.html';
                 return;
             }
@@ -176,10 +263,10 @@
 
             document.getElementById("responseMessage").classList.remove("d-none");
 
-            fetch("/v1/api/inference/", {
+            fetch("/api/inference/", {
                 method: "POST",
                 body: formData,
-                headers: {*
+                headers: {
                     "Authorization": `Bearer ${token}`
                 }
             })
@@ -202,7 +289,9 @@
         });
 
         // Fetch models on page load
-        window.onload = fetchModels;
+        window.onload = function() {
+            fetchModels(); // Load models
+        };
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
