@@ -4,398 +4,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top Contributor</title>
+    <title>Contributor</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-
-        nav {
-            display: flex;
-            align-items: center;
-            background-color: #333;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        nav a {
-            color: white;
-            text-decoration: none;
-            padding: 14px 20px;
-            font-size: 16px;
-            display: block;
-            transition: color 0.3s;
-            position: relative;
-        }
-
-        nav a:hover {
-            color: #ddd;
-        }
-
-        nav a.active {
-            color: #ddd;
-        }
-
-        .nav-links {
-            display: flex;
-            justify-content: space-around;
-            flex-grow: 1;
-        }
-
-        .filter-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-
-        .filter-container label {
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        .filter-container select {
-            padding: 8px;
-            font-size: 14px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            margin-right: 10px;
-            /* Add margin for spacing */
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .navbar {
             background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-top: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid #ddd;
+            padding: 1rem;
         }
 
-        th,
-        td {
-            padding: 15px;
-            border: 1px solid #ddd;
-            text-align: center;
-            word-wrap: break-word;
-            cursor: pointer;
+        .navbar a {
+            color: #333;
+            text-decoration: none;
+            margin: 0 10px;
         }
 
-        th {
-            background-color: #f2f2f2;
+        .navbar a:hover {
+            color: #007bff;
         }
 
-        th span {
-            font-size: 12px;
-            margin-left: 5px;
+        .auth-section {
+            display: flex;
+            align-items: center; /* Vertically center items */
+        }
+
+        .auth-section a {
+            margin: 0 5px; /* Optional: reduce margin between links */
         }
     </style>
 </head>
 
 <body>
-    <nav>
-        <div class="nav-links">
-            <a href="/view-models">View Models</a>
-            <a href="/view-contributors" class="active">Top Model Contributor</a>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container d-flex justify-content-between">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo" style="width: 50px; height: 50px;">
+            <div class="auth-section">
+                <a href="/signin">Sign In</a>
+                <a href="/signup">Sign Up</a>
+            </div>
         </div>
     </nav>
 
-    <!-- Filter Section -->
-    <div class="filter-container">
-        <div class="filter-item">
-            <label for="contributorTypeFilter">Contributor Type:</label>
-            <select id="contributorTypeFilter" onchange="filterContributors()">
-                <option value="all">All Types</option>
-                <option value="Individual">Individual</option>
-                <option value="Team">Team</option>
-            </select>
-        </div>
-        <div class="filter-item">
-            <label for="contributionFilter">Min Contributions:</label>
-            <select id="contributionFilter" onchange="filterContributors()">
-                <option value="0">0</option>
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="15">15</option>
-                <option value="20">20</option>
-                <option value="25">25</option>
-            </select>
-        </div>
-        <div class="filter-item">
-            <label for="streakFilter">Min Day Streak:</label>
-            <select id="streakFilter" onchange="filterContributors()">
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="3">3</option>
-                <option value="5">5</option>
-                <option value="10">10</option>
-            </select>
+    <div class="container-fluid">
+        <div class="row mx-5 my-5">
+            <div class="col-md-1 col-lg-2 d-md-block bg-light sidebar p-4">
+                <h4 class="text-center mb-4">Filters</h4>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" id="allContributorsCheckbox" onchange="filterContributors()">
+                        <label class="form-check-label" for="allContributorsCheckbox">All Contributors</label>
+                    </li>
+                    <li class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" id="topContributorsCheckbox" onchange="filterContributors()">
+                        <label class="form-check-label" for="topContributorsCheckbox">Top Contributors</label>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main content area -->
+            <main class="col-md-8 ms-sm-auto col-lg-8 px-md-4">
+                <div class="container border p-4 bg-white shadow rounded">
+                    <div class="container mb-4">
+                        <ul class="nav nav-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/view-models">View Models</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="#">Top Model Contributors</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="container">
+                        <table class="table table-striped table-hover" id="contributorTable">
+                            <thead>
+                                <tr>
+                                    <th onclick="sortContributorTable(0)" scope="col">Contributor Name</th>
+                                    <th onclick="sortContributorTable(1)" scope="col">Contribution Count</th>
+                                    <th onclick="sortContributorTable(2)" scope="col">Last Contribution Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                <!-- Contributor data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Empty column to maintain structure -->
+            <div class="col-md-1 col-lg-2"></div>
         </div>
     </div>
 
-    <table id="contributorTable">
-        <thead>
-            <tr>
-                <th onclick="sortTable(0)">Rank <span id="sortIndicator0">▼</span></th>
-                <th onclick="sortTable(1)">Contributor Name <span id="sortIndicator1">▼</span></th>
-                <th onclick="sortTable(2)">Contributor Type <span id="sortIndicator2">▼</span></th>
-                <th onclick="sortTable(3)">Number of Contributions <span id="sortIndicator3">▼</span></th>
-                <th onclick="sortTable(4)">Day Streak of Contributions <span id="sortIndicator4">▼</span></th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Contributor data will be populated here -->
-        </tbody>
-    </table>
+    <!-- Bootstrap 5 JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        const contributors = [
-            {
-                rank: 1,
-                name: "Alice Johnson",
-                type: "Individual",
-                contributions: 30,
-                streak: 15
-            },
-            {
-                rank: 2,
-                name: "Bob Smith",
-                type: "Team",
-                contributions: 25,
-                streak: 10
-            },
-            {
-                rank: 3,
-                name: "Charlie Brown",
-                type: "Individual",
-                contributions: 20,
-                streak: 5
-            },
-            {
-                rank: 4,
-                name: "David Wilson",
-                type: "Team",
-                contributions: 15,
-                streak: 8
-            },
-            {
-                rank: 5,
-                name: "Eva White",
-                type: "Individual",
-                contributions: 10,
-                streak: 3
-            },
-            {
-                rank: 6,
-                name: "Fatima Khan",
-                type: "Individual",
-                contributions: 18,
-                streak: 7
-            },
-            {
-                rank: 7,
-                name: "George Lee",
-                type: "Team",
-                contributions: 22,
-                streak: 6
-            },
-            {
-                rank: 8,
-                name: "Hannah Patel",
-                type: "Individual",
-                contributions: 16,
-                streak: 4
-            },
-            {
-                rank: 9,
-                name: "Isaac Chen",
-                type: "Team",
-                contributions: 28,
-                streak: 12
-            },
-            {
-                rank: 10,
-                name: "Jasmine Rodriguez",
-                type: "Individual",
-                contributions: 14,
-                streak: 5
-            },
-            {
-                rank: 11,
-                name: "Karan Singh",
-                type: "Team",
-                contributions: 12,
-                streak: 9
-            },
-            {
-                rank: 12,
-                name: "Lina Wu",
-                type: "Individual",
-                contributions: 19,
-                streak: 2
-            },
-            {
-                rank: 13,
-                name: "Michael Brown",
-                type: "Team",
-                contributions: 11,
-                streak: 1
-            },
-            {
-                rank: 14,
-                name: "Nia Cooper",
-                type: "Individual",
-                contributions: 21,
-                streak: 8
-            },
-            {
-                rank: 15,
-                name: "Oscar Davis",
-                type: "Team",
-                contributions: 24,
-                streak: 3
-            },
-            {
-                rank: 16,
-                name: "Priya Sharma",
-                type: "Individual",
-                contributions: 17,
-                streak: 6
-            },
-            {
-                rank: 17,
-                name: "Quincy Adams",
-                type: "Team",
-                contributions: 9,
-                streak: 2
-            },
-            {
-                rank: 18,
-                name: "Rita Thompson",
-                type: "Individual",
-                contributions: 13,
-                streak: 7
-            },
-            {
-                rank: 19,
-                name: "Sanjay Gupta",
-                type: "Team",
-                contributions: 26,
-                streak: 10
-            },
-            {
-                rank: 20,
-                name: "Tina Nguyen",
-                type: "Individual",
-                contributions: 15,
-                streak: 4
+        let contributors = [];
+
+        async function fetchContributorData() {
+            try {
+                const response = await fetch('/v1/api/contributor_manager/all');
+                const data = await response.json();
+
+                if (data.body && data.body.body) {
+                    contributors = data.body.body; // Store contributors in a global variable
+                    populateContributorTable(contributors);
+                } else {
+                    console.error("Invalid data format", data);
+                }
+            } catch (error) {
+                console.error("Error fetching contributor data:", error);
             }
-        ];
+        }
+
         // Function to populate the table with contributor data
-        function populateContributorTable() {
+        function populateContributorTable(contributorData) {
             const tbody = document.getElementById('contributorTable').getElementsByTagName('tbody')[0];
-            contributors.forEach(contributor => {
+            tbody.innerHTML = '';  // Clear any existing rows
+
+            contributorData.forEach(contributor => {
                 const row = tbody.insertRow();
-                row.insertCell(0).textContent = contributor.rank;
-                row.insertCell(1).textContent = contributor.name;
-                row.insertCell(2).textContent = contributor.type;
-                row.insertCell(3).textContent = contributor.contributions;
-                row.insertCell(4).textContent = contributor.streak;
+                row.setAttribute('scope', 'row');
+                row.insertCell(0).textContent = contributor.name;
+                row.insertCell(1).textContent = contributor.contribution_count;
+                row.insertCell(2).textContent = new Date(contributor.last_contribution_date).toLocaleDateString();
             });
         }
 
-        let lastSortedColumn = -1; // Track the last sorted column
-        const table = document.getElementById("contributorTable");
+        // Function to filter the table based on selected checkboxes
+        function filterContributors() {
+            const allCheckbox = document.getElementById('allContributorsCheckbox').checked;
+            const topCheckbox = document.getElementById('topContributorsCheckbox').checked;
 
-        // Function to sort the table
-        function sortTable(columnIndex) {
-            const tbody = table.getElementsByTagName("tbody")[0];
-            const rows = Array.from(tbody.rows);
-            const sortIndicator = document.getElementById(`sortIndicator${columnIndex}`);
-
-            // Reset sorting direction when switching to a different column
-            if (lastSortedColumn !== columnIndex) {
-                table.dataset.sortDirection = "asc"; // Set default to ascending for a new column
-            }
-
-            const isAscending = table.dataset.sortDirection === "asc";
-            table.dataset.sortDirection = isAscending ? "desc" : "asc"; // Toggle sort direction
-
-            // Clear all sort indicators
-            document.querySelectorAll('th span').forEach(indicator => {
-                indicator.textContent = '▼'; // Reset to default arrow
+            const filteredContributors = contributors.filter(contributor => {
+                if (allCheckbox) {
+                    return true;
+                }
+                // Example: Filter logic for top contributors (customize as needed)
+                return contributor.contribution_count > 10; // Assuming top contributors have more than 10 contributions
             });
 
-            // Set the current sort indicator
-            sortIndicator.textContent = isAscending ? '▲' : '▼'; // Set the arrow direction
+            populateContributorTable(filteredContributors); // Re-populate the table with filtered data
+        }
+
+        // Sort function to sort the contributor table columns
+        function sortContributorTable(columnIndex) {
+            const tbody = document.getElementById("contributorTable").getElementsByTagName("tbody")[0];
+            const rows = Array.from(tbody.rows);
+            let sortDirection = "asc";
+
+            if (tbody.dataset.sortedColumn == columnIndex) {
+                sortDirection = tbody.dataset.sortDirection === "asc" ? "desc" : "asc";
+            }
+            tbody.dataset.sortedColumn = columnIndex;
+            tbody.dataset.sortDirection = sortDirection;
 
             rows.sort((rowA, rowB) => {
-                const cellA = rowA.cells[columnIndex].textContent;
-                const cellB = rowB.cells[columnIndex].textContent;
+                const cellA = rowA.cells[columnIndex].textContent.toLowerCase();
+                const cellB = rowB.cells[columnIndex].textContent.toLowerCase();
 
-                // Adjusting sorting based on the column index
-                if (columnIndex === 0) { // Sorting by Rank
-                    return isAscending ? parseInt(cellB) - parseInt(cellA) : parseInt(cellA) - parseInt(cellB); // Reverse the logic here
-                } else if (columnIndex === 3) { // Sorting by Number of Contributions
-                    return isAscending ? parseInt(cellA) - parseInt(cellB) : parseInt(cellB) - parseInt(cellA);
-                } else if (columnIndex === 4) { // Sorting by Day Streak
-                    return isAscending ? parseInt(cellA) - parseInt(cellB) : parseInt(cellB) - parseInt(cellA);
-                } else { // Sorting by Name or Type (text)
-                    return isAscending ? cellB.localeCompare(cellA) : cellA.localeCompare(cellB);
+                if (columnIndex === 2) { // Sorting by date
+                    return sortDirection === "asc"
+                        ? new Date(cellA) - new Date(cellB)
+                        : new Date(cellB) - new Date(cellA);
+                } else {
+                    return sortDirection === "asc"
+                        ? cellA.localeCompare(cellB)
+                        : cellB.localeCompare(cellA);
                 }
             });
 
-            rows.forEach(row => tbody.appendChild(row)); // Re-append sorted rows
-
-            lastSortedColumn = columnIndex; // Update the last sorted column
+            // Append the sorted rows back to the tbody
+            rows.forEach(row => tbody.appendChild(row));
         }
 
+        // Call the function to fetch contributor data when the page loads
+        window.onload = fetchContributorData;
+    </script>
 
-        // Function to filter contributors based on selected criteria
-        function filterContributors() {
-            const typeFilter = document.getElementById('contributorTypeFilter').value;
-            const minContributions = parseInt(document.getElementById('contributionFilter').value);
-            const minStreak = parseInt(document.getElementById('streakFilter').value);
+    <script>
+        // Check if the user is logged in (i.e., if a token is in localStorage)
+        function isLoggedIn() {
+            return localStorage.getItem('userToken') !== null;
+        }
 
-            const tbody = document.getElementById('contributorTable').getElementsByTagName('tbody')[0];
-            const rows = tbody.getElementsByTagName('tr');
+        // Function to handle rendering the Sign In/Up or Logout button
+        function renderAuthSection() {
+            const authSection = document.querySelector('.auth-section');
 
-            for (let i = 0; i < rows.length; i++) {
-                const type = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
-                const contributions = parseInt(rows[i].getElementsByTagName('td')[3].textContent);
-                const streak = parseInt(rows[i].getElementsByTagName('td')[4].textContent);
+            if (isLoggedIn()) {
+                authSection.innerHTML = `<a href="/profile">Profile</a> <a href="#" id="logoutBtn" class="btn">Logout</a>`;
 
-                let showRow = true;
-
-                // Filter by type
-                if (typeFilter !== 'all' && type !== typeFilter.toLowerCase()) {
-                    showRow = false;
-                }
-
-                // Filter by contributions
-                if (contributions < minContributions) {
-                    showRow = false;
-                }
-
-                // Filter by streak
-                if (streak < minStreak) {
-                    showRow = false;
-                }
-
-                rows[i].style.display = showRow ? '' : 'none'; // Show or hide row
+                document.getElementById('logoutBtn').addEventListener('click', function() {
+                    // Handle logout logic here
+                    localStorage.removeItem('userToken');
+                    renderAuthSection(); // Re-render the auth section
+                });
             }
         }
 
-        // Call the function to populate the table
-        populateContributorTable();
+        // Call the function on page load
+        renderAuthSection();
     </script>
 </body>
 

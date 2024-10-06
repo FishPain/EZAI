@@ -68,7 +68,6 @@ class UserModel(Base):
     def get_user_record_by_uuid(user_uuid):
         return session.query(UserModel).filter_by(user_uuid=user_uuid).first()
 
-
 class MLModel(Base):
     __tablename__ = "ml_model"
     model_uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

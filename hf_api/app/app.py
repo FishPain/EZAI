@@ -105,6 +105,10 @@ def init_app():
     def health():
         return {"status": "healthy"}, 200
     
+    @app.route("/profile")
+    def profile():
+        return render_template("profile.html")
+
     # add more routes here
     return app
 
