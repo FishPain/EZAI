@@ -215,9 +215,11 @@
     
         // Handle logout button
         document.getElementById('logoutBtn').addEventListener('click', function() {
-            // Simulate logging out
-            console.log("User logged out.");
-            window.location.href = "/signin"; // Redirect to login page
+            // Clear user token from local storage
+            localStorage.removeItem('userToken'); // Remove the user's session token
+            
+            // Redirect to the main page
+            window.location.href = "/main"; // Redirect to the main page or login page
         });
     </script>
     

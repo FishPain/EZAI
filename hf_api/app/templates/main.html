@@ -244,22 +244,31 @@
         function isLoggedIn() {
             return localStorage.getItem('userToken') !== null;
         }
-
-        // Function to handle rendering the Sign In/Up or Logout button
+    
+        // Function to handle rendering the Sign In/Up or Profile/Logout button
         function renderAuthSection() {
             const authSection = document.querySelector('.auth-section');
-
+    
             if (isLoggedIn()) {
-                authSection.innerHTML = `<a href="/profile">Profile</a> <a href="#" id="logoutBtn" class="btn">Logout</a>`;
-
-                document.getElementById('logoutBtn').addEventListener('click', function() {
+                authSection.innerHTML = `
+                    <a href="/profile">Profile</a>
+                    <a href="/main" id="logoutBtn" class="btn">Logout</a>
+                `;
+    
+                document.getElementById('logoutBtn').addEventListener('click', function(event) {
+                    event.preventDefault(); // Prevent default anchor behavior
                     // Handle logout logic here
-                    localStorage.removeItem('userToken');
-                    renderAuthSection(); // Re-render the auth section
+                    localStorage.removeItem('userToken'); // Remove the token
+                    window.location.href = "/main"; // Redirect to the /main page
                 });
+            } else {
+                authSection.innerHTML = `
+                    <a href="/signin">Sign In</a>
+                    <a href="/signup">Sign Up</a>
+                `;
             }
         }
-
+    
         // Call the function on page load
         renderAuthSection();
     </script>
