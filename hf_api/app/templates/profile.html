@@ -73,6 +73,7 @@
     </nav>
 
     <div class="container">
+<<<<<<< Updated upstream
         <!-- <div class="profile-header mb-4">
             <h2>User Profile</h2>
             <button id="logoutBtn" class="btn">Logout</button>
@@ -103,6 +104,8 @@
             </div>
         </div>
 
+=======
+>>>>>>> Stashed changes
         <!-- Uploaded Models Section -->
         <div class="card">
             <div class="card-header">
@@ -118,11 +121,21 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Check if the user token exists in local storage
+            const userToken = localStorage.getItem('userToken');
+    
+            // If no user token, redirect to the login page
+            if (!userToken) {
+                window.location.href = "/signin";
+                return; // Stop further execution if not signed in
+            }
+    
             // Fetch user data from the backend
             fetch('/api/user', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}` // Pass the token in the headers
                 }
             })
             .then(response => response.json())
@@ -136,7 +149,7 @@
                     // const password = document.getElementById('password').value;
                     document.getElementById('email').value = data.email;
                     document.getElementById('username').value = data.username;   
-
+    
                     // Assuming user data contains models array, populate the models
                     if (data.models && data.models.length > 0) {
                         const modelList = document.getElementById('modelList');
@@ -161,6 +174,7 @@
                 console.error('Error fetching user data:', error);
             });
         });
+<<<<<<< Updated upstream
     
         // Handle profile form submission (this would send the data to the backend in a real app)
         const profileForm = document.getElementById('profileForm');
@@ -202,6 +216,16 @@
             // Simulate logging out (this would involve removing the auth token and redirecting to the login page)
             console.log("User logged out.");
             window.location.href = "/signin"; // Redirect to login page
+=======
+    
+        // Handle logout button
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            // Clear user token from local storage
+            localStorage.removeItem('userToken'); // Remove the user's session token
+            
+            // Redirect to the main page
+            window.location.href = "/signin"; // Redirect to the login page
+>>>>>>> Stashed changes
         });
     </script>
     

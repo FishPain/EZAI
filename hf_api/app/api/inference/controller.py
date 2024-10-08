@@ -1,63 +1,124 @@
-import uuid, json
-from flask import request
+from flask import request, session, jsonify
 from flask_restx import Namespace, Resource, fields
-from app.constants import SageMakerConstants as sm_constants
-from app.core.SagemakerManager import SagemakerManager
-from app.core.auth_utils import get_header, token_required
-from app.models.models import ModelRegistryModel, InferenceModel, UserModel, MLModel
 
-ns = Namespace("Inference", description="Inference operations")
-
-get_parser = ns.parser()
-get_parser.add_argument("uuid", type=str, required=True, help="The inference UUID")
-
-upload_parser = ns.parser()
-upload_parser.add_argument(
-    "inference_data", location="files", type="file", required=True, help="A json file"
-)
-upload_parser.add_argument(
-    "uuid",
-    type=str,
-    required=True,
-    help="The model registry UUID",
+from app.models.models import UserModel
+from app.core.auth_utils import (
+    set_password,
+    check_password,
+    generate_token,
+    token_required,
 )
 
-delete_parser = ns.parser()
-delete_parser.add_argument("uuid", type=str, required=True, help="The inference UUID")
+ns = Namespace("User", description="User Authentication Endpoints")
 
-inference_model = ns.model(
-    "Inference",
+user_signup_parser = ns.parser()
+user_signup_parser.add_argument("username", type=str, required=True, help="Username")
+user_signup_parser.add_argument("email", type=str, required=True, help="Email")
+user_signup_parser.add_argument("password", type=str, required=True, help="Password")
+
+user_login_parser = ns.parser()
+user_login_parser.add_argument("email", type=str, required=True, help="Email")
+user_login_parser.add_argument("password", type=str, required=True, help="Password")
+
+response_model = ns.model(
+    "Response",
     {
         "message": fields.String(description="Response message"),
-        "uuid": fields.String(description="Inference UUID"),
-    },
-)
-
-inference_result_model = ns.model(
-    "InferenceResult",
-    {
-        "inference_uuid": fields.String(description="Inference UUID"),
-        "status": fields.String(description="Inference status"),
-        "inference": fields.String(description="Inference result"),
+        "uuid": fields.String(description="User UUID", required=False),
     },
 )
 
 
-@ns.route("/")
-class Inference(Resource):
-    @ns.expect(get_parser)
-    @ns.response(200, "Success", inference_result_model)
+@ns.route("/signup")
+class UserSignup(Resource):
+    @ns.expect(user_signup_parser)
+    @ns.response(200, "Success", response_model)
+    @ns.response(
+        400, "Email already registered"
+    )  # New response code for email conflict
+    def post(self):
+        """Sign up a new user"""
+        try:
+            # Extract data from query parameters
+            data = request.args
+            username = data.get("username")
+            email = data.get("email")
+            password = data.get("password")
+
+            hashed_password = set_password(password)
+
+            # Create a new user
+            user_uuid = UserModel.create_user(username, email, hashed_password)
+
+        except Exception as e:
+            return {"message": f"Failed to create user: {e}"}, 500
+
+        # Store the user UUID in session cookies to manage logged-in status
+        session["user_uuid"] = user_uuid
+        return {"message": "User created successfully", "uuid": user_uuid}, 200
+
+
+@ns.route("/login")
+class UserLogin(Resource):
+    @ns.expect(user_login_parser)
+    @ns.response(200, "Success", response_model)
+    def post(self):
+        """Login a user"""
+        try:
+            # Extract data from JSON body
+            data = request.args
+            email = data.get("email")
+            password = data.get("password")
+
+            # Fetch the user by email
+            user = UserModel.get_user_by_email(email)
+
+            if not user:
+                return {"message": "User not found"}, 404
+
+            # Verify the password
+            if not check_password(password, user.password):
+                return {"message": "Incorrect password"}, 401
+
+        except Exception as e:
+            return {"message": f"Failed to log in: {e}"}, 500
+
+        token = generate_token(user.user_uuid)
+
+        return {
+            "message": "Login successful",
+            "uuid": user.user_uuid,
+            "token": token,
+        }, 200
+
+
+@ns.route("/dummy")
+class DummyUser(Resource):
+    @ns.response(200, "Success", response_model)
+    def post(self):
+        """Create Dummy User"""
+        try:
+            dummy_username = "dummyUser"
+            dummy_email = "dummyUser@dummy.com"
+            dummy_pwd = "dummyHexPwd"
+
+            user_uuid = UserModel.create_user(dummy_username, dummy_email, dummy_pwd)
+        except Exception as e:
+            return {"message": f"Failed to create dummy user: {e}"}, 500
+
+        return {"message": "Dummy user created successfully", "body": user_uuid}, 200
+
+
+@ns.route("/info")
+class UserInfo(Resource):
+    @ns.response(200, "Success", response_model)
     @ns.doc(security="Bearer")
     @token_required
     def get(user_id, self):
-        """Get inference result by inference id"""
-        inference_uuid = request.args.get("uuid")
-        inference_result = {
-            "inference_uuid": inference_uuid,
-            "status": "completed",
-            "inference": "This is a dummy inference result",
-        }
+        """Get user info"""
+        user = UserModel.get_user_record_by_uuid(user_id)
         return {
+<<<<<<< Updated upstream
             "message": "Inference Results retrieved successfully",
             "inference_result": inference_result,
         }, 200
@@ -146,3 +207,8 @@ class Inference(Resource):
             return "Inference job stopped successfully", 200
         else:
             return "Inference job not found", 400
+=======
+            "message": "User info fetched successfully",
+            "user_info": user.to_dict(),
+        }, 200
+>>>>>>> Stashed changes
