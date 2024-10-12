@@ -4,8 +4,8 @@ from app.jobs.model_registry_worker import register_model_worker
 from app.models.models import ModelRegistryModel, InferenceModel
 
 
-def register_model(model_uuid):
-    result = register_model_worker.apply_async(args=[model_uuid])
+def register_model(user_uuid, model_uuid):
+    result = register_model_worker.apply_async(args=[user_uuid, model_uuid])
     return result.task_id
 
 

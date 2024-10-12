@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -140,8 +139,12 @@
 
                 if (response.ok) {
                     const data = await response.json();
+
+                    localStorage.setItem('authToken', data.token);
+
                     // If login is successful, redirect to the main page
                     localStorage.setItem('userToken', data.token);
+
                     window.location.href = '/main';
                 } else {
                     // If login fails, show error message
@@ -155,5 +158,4 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

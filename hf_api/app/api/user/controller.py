@@ -33,7 +33,9 @@ response_model = ns.model(
 class UserSignup(Resource):
     @ns.expect(user_signup_parser)
     @ns.response(200, "Success", response_model)
-    @ns.response(400, "Email already registered")  # New response code for email conflict
+    @ns.response(
+        400, "Email already registered"
+    )  # New response code for email conflict
     def post(self):
         """Sign up a new user"""
         try:
@@ -105,3 +107,17 @@ class DummyUser(Resource):
             return {"message": f"Failed to create dummy user: {e}"}, 500
 
         return {"message": "Dummy user created successfully", "body": user_uuid}, 200
+
+
+@ns.route("/info")
+class UserInfo(Resource):
+    @ns.response(200, "Success", response_model)
+    @ns.doc(security="Bearer")
+    @token_required
+    def get(user_id, self):
+        """Get user info"""
+        user = UserModel.get_user_record_by_uuid(user_id)
+        return {
+            "message": "User info fetched successfully",
+            "user_info": user.to_dict(),
+        }, 200

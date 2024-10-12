@@ -1,7 +1,7 @@
 from flask import request
 from flask_restx import Namespace, Resource, fields
 
-from app.api.model_manager.handler import push_to_s3, download_from_s3
+from app.api.model_manager.handler import push_to_s3, download_from_s3, get_all_models
 from app.core.auth_utils import token_required
 
 ns = Namespace("Model Manager", description="Model management operations")
@@ -77,7 +77,7 @@ class ModelManager(Resource):
         """
         uploaded_file = request.files["file"]
         try:
-            resp = push_to_s3(uploaded_file)
+            resp = push_to_s3(user_id, uploaded_file)
         except Exception as e:
             return {"message": f"Failed to upload the model to S3: {e}"}, 500
 
@@ -118,3 +118,16 @@ post_register_fields = ns.model(
         ),
     },
 )
+
+
+@ns.route("/all")
+class ModelManagerInfo(Resource):
+    @ns.response(200, "Success", get_model_fields)
+    # @ns.doc(security="Bearer")
+    # @token_required
+    def get(self):
+        """
+        Get model s3 path by UUID from db
+        """
+        resp = get_all_models()
+        return {"message": "Model retrieved successfully", "body": resp}, 200

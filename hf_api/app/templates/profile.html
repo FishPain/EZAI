@@ -7,7 +7,6 @@
     <title>User Profile</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-
         .navbar {
             background-color: white;
             border-bottom: 1px solid #ddd;
@@ -56,29 +55,52 @@
             margin-top: 3rem;
         }
 
+        /* Align auth-section elements horizontally */
+        .auth-section {
+            display: flex;
+            align-items: center;
+            /* Align items vertically centered */
+            gap: 10px;
+            /* Space between the items */
+        }
+
+        /* Custom styles for the buttons */
+        .btn-custom {
+            background-color: white;
+            color: black;
+            border: 1px solid black;
+            /* Add a black border */
+        }
+
+        .btn-custom:hover {
+            background-color: black;
+            /* Optional: Change background on hover */
+            color: white;
+            /* Optional: Change text color on hover */
+        }
+
+        /* Add padding to the top of the Edit Profile card */
+        .card.mb-4 {
+            margin-top: 20px;
+            /* Adjust this value as needed for more space */
+        }
     </style>
 </head>
 
 <body>
     <!-- Navbar -->
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="container d-flex justify-content-between">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo" style="width: 50px; height: 50px;">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo"
+                style="width: 50px; height: 50px;">
             <div class="auth-section">
                 <a href="/main">Back</a>
-                <button id="logoutBtn" class="btn">Logout</button>
+                <button id="logoutBtn" class="btn btn-outline-danger">Logout</button>
             </div>
         </div>
     </nav>
 
     <div class="container">
-<<<<<<< Updated upstream
-        <!-- <div class="profile-header mb-4">
-            <h2>User Profile</h2>
-            <button id="logoutBtn" class="btn">Logout</button>
-        </div> -->
-
         <!-- Profile Edit Form -->
         <div class="card mb-4">
             <div class="card-header">
@@ -98,14 +120,16 @@
                         <label for="password" class="form-label">New Password</label>
                         <input type="password" class="form-control" id="password" placeholder="Enter new password">
                     </div>
-                    <button type="submit" class="btn">Save Changes</button>
-                    <p id="profileMessage" class="text-success mt-3"></p>
+                    <div class="d-flex align-items-center"> <!-- Flexbox for vertical alignment -->
+                        <button type="submit" class="btn btn-custom me-2">Save Changes</button>
+                        <p id="profileMessage" class="text-success mb-0"></p>
+                    </div>
                 </form>
             </div>
         </div>
 
-=======
->>>>>>> Stashed changes
+        =======
+        >>>>>>> Stashed changes
         <!-- Uploaded Models Section -->
         <div class="card">
             <div class="card-header">
@@ -120,16 +144,16 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Check if the user token exists in local storage
             const userToken = localStorage.getItem('userToken');
-    
+
             // If no user token, redirect to the login page
             if (!userToken) {
                 window.location.href = "/signin";
                 return; // Stop further execution if not signed in
             }
-    
+
             // Fetch user data from the backend
             fetch('/api/user', {
                 method: 'GET',
@@ -138,23 +162,21 @@
                     'Authorization': `Bearer ${userToken}` // Pass the token in the headers
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    console.log("User not found or session expired.");
-                    window.location.href = "/signin"; // Redirect to sign in if no user is found
-                } else {
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.log("User not found or session expired.");
+                        window.location.href = "/signin"; // Redirect to sign in if no user is found
+                    } else {
+                        // Populate the form with the fetched data
+                        document.getElementById('email').value = data.email;
+                        document.getElementById('username').value = data.username;
 
-                    // Populate the form with the fetched data
-                    // const password = document.getElementById('password').value;
-                    document.getElementById('email').value = data.email;
-                    document.getElementById('username').value = data.username;   
-    
-                    // Assuming user data contains models array, populate the models
-                    if (data.models && data.models.length > 0) {
-                        const modelList = document.getElementById('modelList');
-                        data.models.forEach(model => {
-                            const modelCard = `
+                        // Assuming user data contains models array, populate the models
+                        if (data.models && data.models.length > 0) {
+                            const modelList = document.getElementById('modelList');
+                            data.models.forEach(model => {
+                                const modelCard = `
                                 <div class="col-md-4 model-card">
                                     <div class="card">
                                         <div class="card-body">
@@ -165,27 +187,26 @@
                                     </div>
                                 </div>
                             `;
-                            modelList.innerHTML += modelCard;
-                        });
+                                modelList.innerHTML += modelCard;
+                            });
+                        }
                     }
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching user data:', error);
-            });
+                })
+                .catch(error => {
+                    console.error('Error fetching user data:', error);
+                });
         });
-<<<<<<< Updated upstream
-    
-        // Handle profile form submission (this would send the data to the backend in a real app)
+
+        // Handle profile form submission
         const profileForm = document.getElementById('profileForm');
-        profileForm.addEventListener('submit', function(event) {
+        profileForm.addEventListener('submit', function (event) {
             event.preventDefault();
-    
+
             // Get updated form values
             const updatedUsername = document.getElementById('username').value;
             const updatedEmail = document.getElementById('email').value;
             const updatedPassword = document.getElementById('password').value;
-    
+
             // Simulate sending data to the server
             fetch('/api/update_user', {
                 method: 'POST',
@@ -198,37 +219,28 @@
                     password: updatedPassword
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('profileMessage').textContent = "Profile updated successfully!";
-                } else {
-                    document.getElementById('profileMessage').textContent = "Error updating profile.";
-                }
-            })
-            .catch(error => {
-                console.error('Error updating profile:', error);
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('profileMessage').textContent = "Profile updated successfully!";
+                    } else {
+                        document.getElementById('profileMessage').textContent = "Error updating profile.";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating profile:', error);
+                });
         });
-    
+
         // Handle logout button
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            // Simulate logging out (this would involve removing the auth token and redirecting to the login page)
-            console.log("User logged out.");
-            window.location.href = "/signin"; // Redirect to login page
-=======
-    
-        // Handle logout button
-        document.getElementById('logoutBtn').addEventListener('click', function() {
+        document.getElementById('logoutBtn').addEventListener('click', function () {
             // Clear user token from local storage
             localStorage.removeItem('userToken'); // Remove the user's session token
-            
+
             // Redirect to the main page
-            window.location.href = "/signin"; // Redirect to the login page
->>>>>>> Stashed changes
+            window.location.href = "/main"; // Redirect to the main page or login page
         });
     </script>
-    
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
