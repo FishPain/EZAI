@@ -141,12 +141,11 @@ class ModelRegistryAll(Resource):
         """
         Get all Model Registry Infomation
         """
-        print(user_id)
         records = get_registered_model_by_user_uuid(user_id)
 
         if not records:
             return {"message": "Model not found"}, 404
-        
+
         resp = {
             "message": "Model retrieved successfully",
             "body": [

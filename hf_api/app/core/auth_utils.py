@@ -48,22 +48,39 @@ def token_required(f):
         token = None
         if "Authorization" in request.headers:
             token = request.headers["Authorization"].split(" ")[1]
+
         if not token:
             return {
                 "message": "Authentication Token is missing!",
                 "data": None,
                 "error": "Unauthorized",
             }, 401
+
         try:
             data = jwt.decode(token, os.environ.get("SECRET_KEY"), algorithms=["HS256"])
             user_id = data.get("user_id", None)
             current_user = UserModel.get_user_record_by_uuid(user_id)
+
             if current_user is None:
                 return {
                     "message": "Invalid Authentication token!",
                     "data": None,
                     "error": "Unauthorized",
                 }, 401
+
+        except jwt.ExpiredSignatureError:
+            return {
+                "message": "Token has expired!",
+                "data": None,
+                "error": "Unauthorized",
+            }, 401
+
+        except jwt.InvalidTokenError:
+            return {
+                "message": "Invalid token!",
+                "data": None,
+                "error": "Unauthorized",
+            }, 401
 
         except Exception as e:
             return {

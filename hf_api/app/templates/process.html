@@ -76,11 +76,15 @@
         const downloadButton = document.getElementById('downloadButton');
         let inferenceOutputUrl = null;
 
+
         document.addEventListener('DOMContentLoaded', fetchModels);
 
         async function fetchModels() {
             const token = localStorage.getItem('authToken');
-
+            if (!token) {
+                window.location.href = '/signin';
+                return;
+            }
             try {
                 const response = await fetch('/v1/api/model_registry/all', {
                     method: 'GET',
@@ -89,9 +93,13 @@
                     }
                 });
 
-                if (!response.ok) throw new Error('Failed to fetch models');
-                const data = await response.json();
+                if (!response.ok) {
+                    console.log(response.status);
+                    throw new Error(response.statusText);
+                }
 
+                const data = await response.json();
+                print
                 data.body.forEach(model => {
                     const option = document.createElement('option');
                     option.value = model.model_registry_uuid;
