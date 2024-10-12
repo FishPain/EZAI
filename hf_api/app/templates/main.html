@@ -99,7 +99,7 @@
     <div class="header">
         <h1>EZAI</h1>
         <p>Access to thousands of AI models with one click</p>
-        <a href="/view-models" class="btn btn-dark">Get Started</a>
+        <a href="/model" class="btn btn-dark">Get Started</a>
     </div>
 
     <!-- Trending Models Section -->
@@ -209,10 +209,10 @@
                 cardDiv.className = 'model-card';
 
                 const userName = document.createElement('h5');
-                userName.textContent = contributor.username;
+                userName.textContent = contributor.contributor_name;
 
                 const userDetails = document.createElement('p');
-                userDetails.innerHTML = `Models: ${contributor.model_count}<br>Downloads: ${contributor.download_count}`;
+                userDetails.innerHTML = `Contributions: ${contributor.contribution_count}<br>Last Contributed: ${new Date(contributor.last_contribution_date).toLocaleDateString()}`;
 
                 cardDiv.appendChild(userName);
                 cardDiv.appendChild(userDetails);
@@ -227,8 +227,8 @@
                 const response = await fetch('/v1/api/model_manager/all?top_n=3');
                 const data = await response.json();
 
-                if (data.body && data.body.body) {
-                    const models = data.body.body;
+                if (data && data.body) {
+                    const models = data.body;
                     generateModelGrid(models);
                 } else {
                     console.error("Invalid data format", data);
@@ -241,11 +241,11 @@
         // Fetch contributor data and populate grid
         async function fetchContributorData() {
             try {
-                const response = await fetch('/v1/api/contributor_manager/all?top_n=3');
+                const response = await fetch('/v1/api/user/contributors?top_n=3');
                 const data = await response.json();
 
-                if (data.body && data.body.body) {
-                    const contributors = data.body.body;
+                if (data.contributors) {
+                    const contributors = data.contributors;
                     generateContributorGrid(contributors);
                 } else {
                     console.error("Invalid data format", data);

@@ -4,11 +4,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Contributor</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
 </head>
 
 <body>
-    Test
+    <!-- Navbar -->
+    <nav class="navbar navbar-light bg-white border-bottom shadow-sm">
+        <div class="container d-flex justify-content-between">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo" width="50" height="50">
+            <div class="auth-section d-flex align-items-center">
+                <a href="/" class="btn btn-link">Back</a>
+                <button id="logoutBtn" class="btn btn-outline-danger ms-2">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row mx-5 my-5">
+            <div class="col-md-1 col-lg-2 d-md-block bg-light sidebar p-4">
+                <h4 class="text-center mb-4">Filters</h4>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" id="allContributorsCheckbox"
+                            onchange="filterContributors()">
+                        <label class="form-check-label" for="allContributorsCheckbox">All Contributors</label>
+                    </li>
+                    <li class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" id="topContributorsCheckbox"
+                            onchange="filterContributors()">
+                        <label class="form-check-label" for="topContributorsCheckbox">Top Contributors</label>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main content area -->
+            <main class="col-md-8 ms-sm-auto col-lg-8 px-md-4">
+                <div class="container border p-4 bg-white shadow rounded">
+                    <div class="container mb-4">
+                        <ul class="nav nav-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/view-models">View Models</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="#">Top Model Contributors</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="container">
+                        <table class="table table-striped table-hover" id="contributorTable">
+                            <thead>
+                                <tr>
+                                    <th onclick="sortContributorTable(0)" scope="col">Contributor Name</th>
+                                    <th onclick="sortContributorTable(1)" scope="col">Contribution Count</th>
+                                    <th onclick="sortContributorTable(2)" scope="col">Last Contribution Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                <!-- Contributor data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Empty column to maintain structure -->
+            <div class="col-md-1 col-lg-2"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let contributors = [];
+
+        async function fetchContributorData() {
+            try {
+                const response = await fetch('/v1/api/user/contributors');
+                const data = await response.json();
+
+                // Check for successful response and the correct structure
+                if (data.contributors) {
+                    contributors = data.contributors; // Update to use 'data.contributors'
+                    populateContributorTable(contributors);
+                } else {
+                    console.error("Invalid data format", data);
+                }
+            } catch (error) {
+                console.error("Error fetching contributor data:", error);
+            }
+        }
+
+
+        // Function to populate the table with contributor data
+        function populateContributorTable(contributorData) {
+            const tbody = document.getElementById('contributorTable').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';  // Clear any existing rows
+
+            if (contributorData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3">No contributors found.</td></tr>';
+                return;
+            }
+
+            contributorData.forEach(contributor => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = contributor.contributor_name;
+                row.insertCell(1).textContent = contributor.contribution_count;
+                row.insertCell(2).textContent = new Date(contributor.last_contribution_date).toLocaleDateString();
+            });
+        }
+
+
+        // Function to filter the table based on selected checkboxes
+        function filterContributors() {
+            const allCheckbox = document.getElementById('allContributorsCheckbox').checked;
+            const topCheckbox = document.getElementById('topContributorsCheckbox').checked;
+
+            const filteredContributors = contributors.filter(contributor => {
+                if (allCheckbox) {
+                    return true;
+                }
+                // Example: Filter logic for top contributors (customize as needed)
+                return contributor.contribution_count > 10; // Assuming top contributors have more than 10 contributions
+            });
+
+            populateContributorTable(filteredContributors); // Re-populate the table with filtered data
+        }
+
+        // Sort function to sort the contributor table columns
+        function sortContributorTable(columnIndex) {
+            const tbody = document.getElementById("contributorTable").getElementsByTagName("tbody")[0];
+            const rows = Array.from(tbody.rows);
+            let sortDirection = "asc";
+
+            if (tbody.dataset.sortedColumn == columnIndex) {
+                sortDirection = tbody.dataset.sortDirection === "asc" ? "desc" : "asc";
+            }
+            tbody.dataset.sortedColumn = columnIndex;
+            tbody.dataset.sortDirection = sortDirection;
+
+            rows.sort((rowA, rowB) => {
+                const cellA = rowA.cells[columnIndex].textContent.toLowerCase();
+                const cellB = rowB.cells[columnIndex].textContent.toLowerCase();
+
+                if (columnIndex === 2) { // Sorting by date
+                    return sortDirection === "asc"
+                        ? new Date(cellA) - new Date(cellB)
+                        : new Date(cellB) - new Date(cellA);
+                } else {
+                    return sortDirection === "asc"
+                        ? cellA.localeCompare(cellB)
+                        : cellB.localeCompare(cellA);
+                }
+            });
+
+            // Append the sorted rows back to the tbody
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        // Call the function to fetch contributor data when the page loads
+        window.onload = fetchContributorData();
+    </script>
+
 </body>
 
 </html>

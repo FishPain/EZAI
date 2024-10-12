@@ -4,7 +4,12 @@ from werkzeug.datastructures import FileStorage
 from app.core.SagemakerManager import SagemakerManager
 from app.constants import SageMakerConstants as sm_constants
 from app.constants import AppConstants as app_constants
-from app.models.models import MLModel, InferenceModel, get_model_run_counts_with_details, get_model_run_counts_with_details_filter
+from app.models.models import (
+    MLModel,
+    InferenceModel,
+    get_model_run_counts_with_details,
+    get_model_run_counts_with_details_filter,
+)
 
 
 def get_all_models(user_uuid: str = None, top_n: int = None) -> dict:
@@ -15,21 +20,16 @@ def get_all_models(user_uuid: str = None, top_n: int = None) -> dict:
     try:
         if user_uuid:
             models = MLModel.get_all_models_by_user_uuid(user_uuid)
+            models = [model.to_dict() for model in models]
         elif top_n:
             models = get_model_run_counts_with_details_filter(top_n)
         else:
             models = get_model_run_counts_with_details()
 
-        resp = {
-            "message": "Successfully fetched all models",
-            "body": models,
-        }
     except Exception as e:
         raise Exception(f"Failed to fetch all models: {e}")
 
-    return resp
-
-
+    return models
 
 
 def download_from_s3(model_uuid: str) -> dict:

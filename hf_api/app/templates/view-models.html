@@ -15,7 +15,7 @@
         <div class="container d-flex justify-content-between">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo" width="50" height="50">
             <div class="auth-section d-flex align-items-center">
-                <button type="button" class="btn btn-secondary" onclick=window.history.back()>Back</button>
+                <a href="/" class="btn btn-link">Back</a>
                 <button id="logoutBtn" class="btn btn-outline-danger ms-2">Logout</button>
             </div>
         </div>
@@ -104,8 +104,8 @@
                 const response = await fetch(`http://localhost:5001/v1/api/model_manager/all`);
                 const data = await response.json();
 
-                if (data.body && data.body.body) {
-                    models = data.body.body; // Store models in a global variable
+                if (data && data.body) {
+                    models = data.body; // Store models in a global variable
                     populateModelTable(models);
                 } else {
                     console.error("Invalid data format", data);
@@ -189,11 +189,6 @@
 
             // Append the sorted rows back to the tbody
             rows.forEach(row => tbody.appendChild(row));
-        }
-
-        // Function to navigate back to the main page
-        function goBack() {
-            window.location.href = '/'; // Update the URL as needed for your main page
         }
 
         // Call the function to fetch model data when the page loads

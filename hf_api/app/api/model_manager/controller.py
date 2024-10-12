@@ -166,6 +166,9 @@ get_model_parser = ns.parser()
 get_model_parser.add_argument(
     "top_n", type=int, required=False, help="Get top n models"
 )
+get_model_parser.add_argument(
+    "user_uuid", type=str, required=False, help="Get all models by user UUID"
+)
 
 
 @ns.expect(get_model_parser)
@@ -174,8 +177,6 @@ class ModelManagerInfo(Resource):
     @ns.response(200, "Success", get_model_fields)
     def get(self):
         top_n = request.args.get("top_n")
-        if top_n:
-            resp = get_all_models(top_n=int(top_n))
-        else:
-            resp = get_all_models()
+        user_id = request.args.get("user_uuid")
+        resp = get_all_models(user_id, top_n)
         return {"message": "Model retrieved successfully", "body": resp}, 200

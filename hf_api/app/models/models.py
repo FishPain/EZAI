@@ -79,6 +79,33 @@ class UserModel(Base):
     def get_user_record_by_uuid(user_uuid):
         return session.query(UserModel).filter_by(user_uuid=user_uuid).first()
 
+    @staticmethod
+    def get_contributors_with_contributions(top_n: int = None):
+        if top_n:
+            return (
+                session.query(
+                    UserModel.username,
+                    func.count(JobsModel.job_uuid).label("contribution_count"),
+                    func.max(JobsModel.job_datetime).label("last_contribution_date"),
+                )
+                .outerjoin(JobsModel, UserModel.user_uuid == JobsModel.user_uuid)
+                .group_by(UserModel.user_uuid)
+                .order_by(desc("contribution_count"))
+                .limit(top_n)
+                .all()
+            )
+
+        return (
+            session.query(
+                UserModel.username,
+                func.count(JobsModel.job_uuid).label("contribution_count"),
+                func.max(JobsModel.job_datetime).label("last_contribution_date"),
+            )
+            .outerjoin(JobsModel, UserModel.user_uuid == JobsModel.user_uuid)
+            .group_by(UserModel.user_uuid)
+            .all()
+        )
+
 
 class MLModel(Base):
     __tablename__ = "ml_model"

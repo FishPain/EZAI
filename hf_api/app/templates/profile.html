@@ -14,7 +14,7 @@
         <div class="container d-flex justify-content-between">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo" width="50" height="50">
             <div class="auth-section d-flex align-items-center">
-                <button type="button" class="btn btn-secondary" onclick=window.history.back()>Back</button>
+                <button type="button" class="btn btn-secondary" onclick="window.history.back()">Back</button>
                 <button id="logoutBtn" class="btn btn-outline-danger ms-2">Logout</button>
             </div>
         </div>
@@ -63,85 +63,96 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Fetch user data from the backend
-            fetch('/api/user', {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                window.location.href = "/signin";
+                return;
+            }
+
+            // Fetch user profile information
+            fetch('/v1/api/user/info', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 }
             })
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
                         console.log("User not found or session expired.");
-                        window.location.href = "/signin"; // Redirect to sign in if no user is found
+                        window.location.href = "/signin";
                     } else {
-                        // Populate the form with the fetched data
-                        document.getElementById('email').value = data.email;
-                        document.getElementById('username').value = data.username;
+                        document.getElementById('email').value = data.user_info.email;
+                        document.getElementById('username').value = data.user_info.username;
 
-                        // Populate the models
-                        if (data.models && data.models.length > 0) {
-                            const modelList = document.getElementById('modelList');
-                            data.models.forEach(model => {
-                                const modelCard = `
-                                <div class="col-md-4 mb-4">
-                                    <div class="card shadow-sm">
-                                        <div class="card-body">
-                                            <h5 class="card-title">${model.name}</h5>
-                                            <p class="card-text">${model.description}</p>
-                                            <p class="card-text text-muted">Uploaded on: ${model.date}</p>
+                        // Fetch user models after profile information is fetched
+                        fetch(`/v1/api/model_manager/all?user_uuid=${data.user_info.user_uuid}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            }
+                        })
+                            .then(response => response.json())
+                            .then(modelData => {
+                                if (modelData.error) {
+                                    console.log("Error fetching models.");
+                                } else if (modelData.body && modelData.body.length > 0) {
+                                    const modelList = document.getElementById('modelList');
+                                    console.log(modelData.body);
+                                    modelData.body.forEach(model => {
+                                        console.log(model);
+                                        const modelCard = `
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card shadow-sm">
+                                            <div class="card-body">
+                                                <h5 class="card-title">${model.model_name}</h5>
+                                                <p class="card-text text-muted">Type: ${model.model_type}</p>
+                                                <p class="card-text text-muted">Uploaded on: ${new Date(model.upload_datetime).toLocaleDateString()}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            `;
-                                modelList.innerHTML += modelCard;
-                            });
-                        }
+                                `;
+                                        modelList.innerHTML += modelCard;
+                                    });
+                                }
+                            })
+                            .catch(error => console.error('Error fetching models:', error));
                     }
                 })
-                .catch(error => {
-                    console.error('Error fetching user data:', error);
-                });
-        });
+                .catch(error => console.error('Error fetching user info:', error));
 
-        // Handle profile form submission
-        const profileForm = document.getElementById('profileForm');
-        profileForm.addEventListener('submit', function (event) {
-            event.preventDefault();
+            // Handle profile form submission
+            document.getElementById('profileForm').addEventListener('submit', function (event) {
+                event.preventDefault();
 
-            const updatedUsername = document.getElementById('username').value;
-            const updatedEmail = document.getElementById('email').value;
-            const updatedPassword = document.getElementById('password').value;
+                const updatedUsername = document.getElementById('username').value;
+                const updatedEmail = document.getElementById('email').value;
+                const updatedPassword = document.getElementById('password').value;
 
-            fetch('/api/update_user', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: updatedUsername,
-                    email: updatedEmail,
-                    password: updatedPassword
+                fetch('/v1/api/update_user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ username: updatedUsername, email: updatedEmail, password: updatedPassword })
                 })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('profileMessage').textContent = "Profile updated successfully!";
-                    } else {
-                        document.getElementById('profileMessage').textContent = "Error updating profile.";
-                    }
-                })
-                .catch(error => {
-                    console.error('Error updating profile:', error);
-                });
-        });
+                    .then(response => response.json())
+                    .then(updateData => {
+                        document.getElementById('profileMessage').textContent = updateData.success
+                            ? "Profile updated successfully!"
+                            : "Error updating profile.";
+                    })
+                    .catch(error => console.error('Error updating profile:', error));
+            });
 
-        // Handle logout button
-        document.getElementById('logoutBtn').addEventListener('click', function () {
-            localStorage.removeItem('userToken'); // Remove the user's session token
-            window.location.href = "/"; // Redirect to the main page or login page
+            // Handle logout button
+            document.getElementById('logoutBtn').addEventListener('click', function () {
+                localStorage.removeItem('userToken');
+                window.location.href = "/";
+            });
         });
     </script>
 

@@ -121,3 +121,42 @@ class UserInfo(Resource):
             "message": "User info fetched successfully",
             "user_info": user.to_dict(),
         }, 200
+
+
+get_contributors_parser = ns.parser()
+get_contributors_parser.add_argument(
+    "top_n", type=int, required=False, help="Get top n contributors"
+)
+
+
+@ns.expect(get_contributors_parser)
+@ns.route("/contributors")
+class UserContributors(Resource):
+    @ns.response(200, "Success", response_model)
+    def get(self):  # Correctly get user_id from the decorator
+        """Get contributor list with name, contribution count, and last contribution date"""
+        try:
+            top_n = request.args.get("top_n")
+
+            # Query the database to get contributors' data
+            contributors = UserModel.get_contributors_with_contributions(top_n)
+
+            # Formatting the response data
+            contributor_list = []
+
+            for contributor in contributors:
+                contributor_list.append(
+                    {
+                        "contributor_name": contributor.username,
+                        "contribution_count": contributor.contribution_count,
+                        "last_contribution_date": contributor.last_contribution_date.isoformat(),
+                    }
+                )
+
+            return {
+                "message": "Contributor list retrieved successfully",
+                "contributors": contributor_list,
+            }, 200
+
+        except Exception as e:
+            return {"message": f"Failed to fetch contributors: {str(e)}"}, 500

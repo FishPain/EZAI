@@ -134,24 +134,16 @@
 </head>
 
 <body>
-    <!-- Header section -->
-    <div class="header">
-        <!-- Left Logo Section -->
-        <div class="logo">
-            <img src="path-to-your-logo.png" alt="Logo">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container d-flex justify-content-between">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo"
+                style="width: 50px; height: 50px;">
+            <div class="auth-section" id="authSection">
+                <!-- Auth section will be populated by JavaScript -->
+            </div>
         </div>
-
-        <!-- Center Search Bar -->
-        <div class="search-bar">
-            <input type="text" placeholder="Search models...">
-        </div>
-
-        <!-- Right Navigation Links -->
-        <div class="nav-links">
-            <a href="main" class="btn btn-outline-secondary">Home</a>
-            <button id="logoutButton" class="btn btn-logout">Logout</button>
-        </div>
-    </div>
+    </nav>
 
     <!-- Main Container for Upload and Inference -->
     <div class="container">
@@ -209,7 +201,7 @@
                 return;
             }
 
-            fetch('/api/model_manager/all', {
+            fetch('/v1/api/model_manager/all', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}` // Ensure Bearer token format
@@ -265,7 +257,7 @@
 
             document.getElementById("responseMessage").classList.remove("d-none");
 
-            fetch("/api/inference/", {
+            fetch("/v1/api/inference/", {
                 method: "POST",
                 body: formData,
                 headers: {
