@@ -10,6 +10,16 @@
 </head>
 
 <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-light bg-white border-bottom shadow-sm">
+        <div class="container d-flex justify-content-between">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo" width="50" height="50">
+            <div class="auth-section d-flex align-items-center">
+                <button type="button" class="btn btn-secondary" onclick=window.history.back()>Back</button>
+                <button id="logoutBtn" class="btn btn-outline-danger ms-2">Logout</button>
+            </div>
+        </div>
+    </nav>
     <div class="container-fluid">
         <div class="row mx-5 my-5">
             <div class="col-lg-2 d-md-block bg-light sidebar p-4">
@@ -57,8 +67,6 @@
                                 <a class="nav-link" href="/view-contributors">Top Model Contributors</a>
                             </li>
                         </ul>
-                        <!-- Back Button -->
-                        <button onclick="goBack()" class="btn btn-secondary">Back</button>
                     </div>
 
                     <div class="container">

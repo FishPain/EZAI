@@ -162,14 +162,20 @@ post_register_fields = ns.model(
 )
 
 
+get_model_parser = ns.parser()
+get_model_parser.add_argument(
+    "top_n", type=int, required=False, help="Get top n models"
+)
+
+
+@ns.expect(get_model_parser)
 @ns.route("/all")
 class ModelManagerInfo(Resource):
     @ns.response(200, "Success", get_model_fields)
-    # @ns.doc(security="Bearer")
-    # @token_required
     def get(self):
-        """
-        Get model s3 path by UUID from db
-        """
-        resp = get_all_models()
+        top_n = request.args.get("top_n")
+        if top_n:
+            resp = get_all_models(top_n=int(top_n))
+        else:
+            resp = get_all_models()
         return {"message": "Model retrieved successfully", "body": resp}, 200
