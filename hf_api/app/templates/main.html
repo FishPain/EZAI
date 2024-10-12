@@ -89,9 +89,8 @@
         <div class="container d-flex justify-content-between">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo"
                 style="width: 50px; height: 50px;">
-            <div class="auth-section">
-                <a href="/signin">Sign In</a>
-                <a href="/signup">Sign Up</a>
+            <div class="auth-section" id="authSection">
+                <!-- Auth section will be populated by JavaScript -->
             </div>
         </div>
     </nav>
@@ -111,29 +110,16 @@
                     style="color: black;"></i></a>
         </div>
         <div id="modelContainer" class="container"></div>
-        <!-- Top Contributors Section -->
-        <div class="container contributors-section">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2>Top Contributors</h2>
-                <a href="/view-contributors" class="view-more">
-                    View More <i class="fas fa-chevron-right" style="color: black;"></i>
-                </a>
-            </div>
-            <div class="model-grid">
-                <div class="model-card">
-                    <h5>Username</h5>
-                    <p>Models: 10<br>Downloads: 100</p>
-                </div>
-                <div class="model-card">
-                    <h5>Username</h5>
-                    <p>Models: 10<br>Downloads: 100</p>
-                </div>
-                <div class="model-card">
-                    <h5>Username</h5>
-                    <p>Models: 10<br>Downloads: 100</p>
-                </div>
-            </div>
+    </div>
+
+    <!-- Top Contributors Section -->
+    <div class="container contributors-section">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Top Contributors</h2>
+            <a href="/view-contributors" class="view-more">View More <i class="fas fa-chevron-right"
+                    style="color: black;"></i></a>
         </div>
+        <div id="contributorContainer" class="container"></div>
     </div>
 
     <!-- Footer Section -->
@@ -142,12 +128,35 @@
     </div>
 
     <script>
-        // Function to populate the container with rows of models, 3 per row
+        // Function to update the auth section based on the presence of an auth token
+        function updateAuthSection() {
+            const authSection = document.getElementById('authSection');
+            const authToken = localStorage.getItem('authToken');
+
+            if (authToken) {
+                authSection.innerHTML = `
+                    <a href="/profile">Profile</a>
+                    <a href="/" id="logoutLink">Logout</a>
+                `;
+
+                document.getElementById('logoutLink').addEventListener('click', function (event) {
+                    event.preventDefault();
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/';
+                });
+            } else {
+                authSection.innerHTML = `
+                    <a href="/signin">Sign In</a>
+                    <a href="/signup">Sign Up</a>
+                `;
+            }
+        }
+
+        // Function to populate the model grid
         function generateModelGrid(models) {
             const modelContainer = document.getElementById('modelContainer');
-            modelContainer.innerHTML = ''; // Clear any existing content
+            modelContainer.innerHTML = '';
 
-            // Create a new row for every 3 models
             let rowDiv;
             models.forEach((model, index) => {
                 if (index % 3 === 0) {
@@ -156,11 +165,9 @@
                     modelContainer.appendChild(rowDiv);
                 }
 
-                // Create the column for each model
                 const colDiv = document.createElement('div');
                 colDiv.className = 'col-md-4';
 
-                // Create the model card
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'model-card';
 
@@ -182,7 +189,39 @@
             });
         }
 
-        // Fetch model data with the top_n parameter and populate grid
+        // Function to populate the contributor grid
+        function generateContributorGrid(contributors) {
+            const contributorContainer = document.getElementById('contributorContainer');
+            contributorContainer.innerHTML = '';
+
+            let rowDiv;
+            contributors.forEach((contributor, index) => {
+                if (index % 3 === 0) {
+                    rowDiv = document.createElement('div');
+                    rowDiv.className = 'row';
+                    contributorContainer.appendChild(rowDiv);
+                }
+
+                const colDiv = document.createElement('div');
+                colDiv.className = 'col-md-4';
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'model-card';
+
+                const userName = document.createElement('h5');
+                userName.textContent = contributor.username;
+
+                const userDetails = document.createElement('p');
+                userDetails.innerHTML = `Models: ${contributor.model_count}<br>Downloads: ${contributor.download_count}`;
+
+                cardDiv.appendChild(userName);
+                cardDiv.appendChild(userDetails);
+                colDiv.appendChild(cardDiv);
+                rowDiv.appendChild(colDiv);
+            });
+        }
+
+        // Fetch model data and populate grid
         async function fetchModelData() {
             try {
                 const response = await fetch('/v1/api/model_manager/all?top_n=3');
@@ -199,8 +238,27 @@
             }
         }
 
-        // Initial fetch to populate the grid
+        // Fetch contributor data and populate grid
+        async function fetchContributorData() {
+            try {
+                const response = await fetch('/v1/api/contributor_manager/all?top_n=3');
+                const data = await response.json();
+
+                if (data.body && data.body.body) {
+                    const contributors = data.body.body;
+                    generateContributorGrid(contributors);
+                } else {
+                    console.error("Invalid data format", data);
+                }
+            } catch (error) {
+                console.error("Error fetching contributor data:", error);
+            }
+        }
+
+        // Initialize the page
+        updateAuthSection();
         fetchModelData();
+        fetchContributorData();
     </script>
 
 </body>
