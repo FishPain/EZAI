@@ -94,7 +94,9 @@
                 });
 
                 if (!response.ok) {
-                    console.log(response.status);
+                    if (response.status === 401) {
+                        window.location.href = '/signin';
+                    }
                     throw new Error(response.statusText);
                 }
 
