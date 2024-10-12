@@ -3,7 +3,17 @@ from datetime import datetime
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy import Column, String, DateTime, ForeignKey, func
+from sqlalchemy import (
+    Column,
+    String,
+    DateTime,
+    ForeignKey,
+    func,
+    case,
+    literal,
+    cast,
+    Integer,
+)
 
 engine = create_engine(os.getenv("DATABASE_URI"))
 
@@ -67,6 +77,7 @@ class UserModel(Base):
     @staticmethod
     def get_user_record_by_uuid(user_uuid):
         return session.query(UserModel).filter_by(user_uuid=user_uuid).first()
+
 
 class MLModel(Base):
     __tablename__ = "ml_model"
@@ -324,42 +335,80 @@ Base.metadata.create_all(engine)
 
 
 def get_model_run_counts_with_details():
-    model_run_counts = (
-        session.query(
-            ModelRegistryModel.model_registry_uuid,
-            ModelRegistryModel.model_version,
-            func.count(InferenceModel.model_registry_uuid).label("run_count"),
-            MLModel.model_name,  # Get the model name
-            MLModel.model_type,  # Get the model type
-            MLModel.upload_datetime,  # Get the upload date
+    try:
+        model_run_counts = (
+            session.query(
+                ModelRegistryModel.model_registry_uuid,
+                ModelRegistryModel.model_version,
+                func.coalesce(func.count(InferenceModel.model_registry_uuid), 0).label(
+                    "run_count"
+                ),
+                MLModel.model_name,
+                MLModel.model_type,
+                MLModel.upload_datetime,
+                # Cast the boolean case expression to Integer before applying max
+                func.max(
+                    cast(
+                        case(
+                            (
+                                InferenceModel.model_registry_uuid.isnot(None),
+                                literal(True),
+                            ),
+                            else_=literal(False),
+                        ),
+                        Integer,
+                    )
+                ).label("registered"),
+            )
+            .outerjoin(
+                InferenceModel,
+                InferenceModel.model_registry_uuid
+                == ModelRegistryModel.model_registry_uuid,
+            )
+            .join(MLModel, ModelRegistryModel.model_uuid == MLModel.model_uuid)
+            .group_by(
+                ModelRegistryModel.model_registry_uuid,
+                ModelRegistryModel.model_version,
+                MLModel.model_name,
+                MLModel.model_type,
+                MLModel.upload_datetime,
+            )
+            .all()
         )
-        .join(
-            InferenceModel,
-            InferenceModel.model_registry_uuid
-            == ModelRegistryModel.model_registry_uuid,
-        )
-        .join(
-            MLModel, ModelRegistryModel.model_uuid == MLModel.model_uuid
-        )  # Join with MLModel
-        .group_by(
-            ModelRegistryModel.model_registry_uuid,
-            ModelRegistryModel.model_version,
-            MLModel.model_name,
-            MLModel.model_type,
-            MLModel.upload_datetime,
-        )
-        .all()
-    )
+    except Exception as e:
+        # Roll back the session in case of any error
+        session.rollback()
+        raise Exception(f"Failed to fetch all models: {e}")
 
     resp = []
     for model in model_run_counts:
         model_dict = {
             "model_registry_uuid": model.model_registry_uuid,
             "model_version": model.model_version,
-            "run_count": model.run_count,
+            "run_count": model.run_count if model.registered else 0,
             "model_name": model.model_name,
             "model_type": model.model_type,
             "upload_datetime": model.upload_datetime.isoformat(),
+            "registered": bool(model.registered),  # Convert back to boolean
+        }
+        resp.append(model_dict)
+
+    return resp
+
+
+def search_for_models(search_term):
+    search_term = f"%{search_term}%"
+    models = session.query(MLModel).filter(MLModel.model_name.ilike(search_term)).all()
+
+    resp = []
+    for model in models:
+        model_dict = {
+            "model_uuid": model.model_uuid,
+            "user_uuid": model.user_uuid,
+            "upload_datetime": model.upload_datetime.isoformat(),
+            "model_name": model.model_name,
+            "model_type": model.model_type,
+            "s3_url": model.s3_url,
         }
         resp.append(model_dict)
 

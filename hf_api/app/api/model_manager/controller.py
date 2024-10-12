@@ -11,7 +11,30 @@ get_parser.add_argument("uuid", type=str, required=True, help="The model UUID")
 
 upload_parser = ns.parser()
 upload_parser.add_argument(
-    "file", location="files", type="file", required=True, help="A tar.gz file"
+    "modelFile",
+    location="files",
+    type="file",
+    required=True,
+    help="The model file to upload (.tar.gz)",
+)
+upload_parser.add_argument(
+    "modelName", location="form", type=str, required=True, help="The name of the model"
+)
+upload_parser.add_argument(
+    "modelType",
+    location="form",
+    type=str,
+    required=True,
+    choices=["tensorflow", "pytorch"],
+    help="The type of the model (e.g., TensorFlow, PyTorch)",
+)
+upload_parser.add_argument(
+    "registerModel",
+    location="form",
+    type=bool,
+    required=False,
+    default=False,
+    help="Whether to register the model after uploading",
 )
 
 delete_parser = ns.parser()
@@ -73,13 +96,32 @@ class ModelManager(Resource):
     @token_required
     def post(user_id, self):
         """
-        Upload a model to S3 and returns the model UUID and S3 path
+        Upload a model to S3 and return the model UUID and S3 path
         """
-        uploaded_file = request.files["file"]
+        # Extract file and form data from the request
+        uploaded_file = request.files.get("modelFile")
+        model_name = request.form.get("modelName")
+        model_type = request.form.get("modelType")
+        register_model = (
+            request.form.get("registerModel") == "true"
+        )  # Assuming this comes in as a string 'true'/'false'
+
+        if not uploaded_file or not model_name or not model_type:
+            return {
+                "message": "Missing required fields: modelFile, modelName, modelType"
+            }, 400
+
         try:
-            resp = push_to_s3(user_id, uploaded_file)
+            # Call your S3 upload function, passing necessary information
+            resp = push_to_s3(user_id, uploaded_file, model_name, model_type)
         except Exception as e:
             return {"message": f"Failed to upload the model to S3: {e}"}, 500
+
+        # Additional logic if 'registerModel' is set to True
+        if register_model:
+            # Implement registration logic here, as required
+            # For example, adding the model to a registry
+            pass
 
         return {"message": "File uploaded successfully", "body": resp}, 200
 

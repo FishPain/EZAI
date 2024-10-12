@@ -13,6 +13,7 @@ from app.constants import AppConstants as app_constants
 from app.constants import SageMakerConstants as sm_constants
 from app.core.SagemakerManager import SagemakerManager
 
+import logging
 
 def init_app():
     """Spawns the application"""
@@ -29,6 +30,10 @@ def init_app():
     os.environ["SECRET_KEY"] = secrets.token_urlsafe(16)
 
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+
+    # Set up logging
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
+    app.logger.setLevel(logging.DEBUG)
 
     # Register application endpoints using Blueprint
     blueprint = Blueprint("api", __name__, url_prefix=f"/{app_constants.API_VERSION}")
@@ -80,15 +85,23 @@ def init_app():
     @app.route("/signin")
     def index():
         return render_template("signin.html")
-    
+
     @app.route("/signup")
     def signup():
         return render_template("signup.html")
 
-    @app.route("/main")
+    @app.route("/")
     def main():
         return render_template("main.html")
-        
+
+    @app.route("/process")
+    def process():
+        return render_template("process.html")
+
+    @app.route("/model")
+    def upload_m():
+        return render_template("model.html")
+
     @app.route("/view-models")
     def view_model():
         return render_template("view-models.html")
@@ -96,7 +109,7 @@ def init_app():
     @app.route("/view-contributors")
     def view_contributor():
         return render_template("view-contributors.html")
-    
+
     @app.route("/example")
     def example():
         return render_template("example.html")
@@ -104,7 +117,7 @@ def init_app():
     @app.route("/health")
     def health():
         return {"status": "healthy"}, 200
-    
+
     @app.route("/profile")
     def profile():
         return render_template("profile.html")

@@ -29,7 +29,8 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            padding-top: 80px; /* Space for the navbar */
+            padding-top: 80px;
+            /* Space for the navbar */
         }
 
         .navbar a {
@@ -82,8 +83,9 @@
     <nav class="navbar">
         <div class="navcontainer d-flex justify-content-between">
             <!-- Wrap the image with an anchor tag -->
-            <a href="/main">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo" style="width: 50px; height: 50px;">
+            <a href="/">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo"
+                    style="width: 50px; height: 50px;">
             </a>
         </div>
     </nav>
@@ -101,7 +103,8 @@
                 </div>
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+                    <input type="password" class="form-control" id="password" placeholder="Enter your password"
+                        required>
                 </div>
                 <p id="errorMessage" class="error"></p>
                 <button type="submit" class="btn btn-dark w-100">Sign Up</button>

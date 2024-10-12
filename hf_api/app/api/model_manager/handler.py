@@ -49,7 +49,9 @@ def download_from_s3(model_uuid: str) -> dict:
     return resp
 
 
-def push_to_s3(user_uuid: str, model: FileStorage) -> dict:
+def push_to_s3(
+    user_uuid: str, model: FileStorage, model_name: str, model_type: str
+) -> dict:
     bucket_name = sm_constants.BUCKET_NAME
     role = sm_constants.ROLE
     sm = SagemakerManager(bucket_name, role)
@@ -72,10 +74,9 @@ def push_to_s3(user_uuid: str, model: FileStorage) -> dict:
     # Upload the file to S3
     try:
         s3_path = sm.upload_to_s3(file_path, model.filename)
-        model_type = "tensorflow"  # TODO: Add support for other model types
         model_uuid = MLModel.save_model_to_db(
             user_uuid=user_uuid,
-            model_name=model.filename,
+            model_name=model_name,
             model_type=model_type,
             s3_url=s3_path,
         )
