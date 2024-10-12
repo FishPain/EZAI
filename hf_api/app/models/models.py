@@ -504,3 +504,34 @@ def search_for_models(search_term):
         resp.append(model_dict)
 
     return resp
+
+
+def get_registered_model_by_user_uuid(user_uuid: str):
+    try:
+        # Query the ModelRegistryModel joined with MLModel
+        model_registry = (
+            session.query(ModelRegistryModel, MLModel.model_name, MLModel.model_type)
+            .join(MLModel, ModelRegistryModel.model_uuid == MLModel.model_uuid)
+            .filter(MLModel.user_uuid == user_uuid)
+            .all()
+        )
+    except Exception as e:
+        # Roll back the session in case of any error
+        session.rollback()
+        raise Exception(f"Failed to fetch all models: {e}")
+
+    resp = []
+    for model_registry, model_name, model_type in model_registry:
+        model_dict = {
+            "model_registry_uuid": model_registry.model_registry_uuid,
+            "model_uuid": model_registry.model_uuid,
+            "model_name": model_name,  # Using model_name from MLModel
+            "model_type": model_type,  # Using model_type from MLModel
+            "model_version": model_registry.model_version,
+            "model_status": model_registry.model_status,
+            "model_endpoint": model_registry.model_endpoint,
+        }
+        resp.append(model_dict)
+
+    print(resp)
+    return resp

@@ -1,7 +1,11 @@
 from flask import request
 from flask_restx import Namespace, Resource, fields
 
-from app.models.models import ModelRegistryModel, JobsModel
+from app.models.models import (
+    ModelRegistryModel,
+    JobsModel,
+    get_registered_model_by_user_uuid,
+)
 from app.api.model_registry.handler import clean_up_model_resources, register_model
 from app.core.auth_utils import token_required
 
@@ -126,6 +130,40 @@ class ModelRegistry(Resource):
             return "Model endpoint deleted successfully", 200
         else:
             return "Model UUID is missing", 400
+
+
+@ns.route("/all")
+class ModelRegistryAll(Resource):
+    @ns.response(200, "Success", get_fields)
+    @ns.doc(security="Bearer")
+    @token_required
+    def get(user_id, self):
+        """
+        Get all Model Registry Infomation
+        """
+        print(user_id)
+        records = get_registered_model_by_user_uuid(user_id)
+
+        if not records:
+            return {"message": "Model not found"}, 404
+        
+        resp = {
+            "message": "Model retrieved successfully",
+            "body": [
+                {
+                    "uuid": record["model_uuid"],
+                    "model_version": record["model_version"],
+                    "model_registry_uuid": record["model_registry_uuid"],
+                    "model_name": record["model_name"],
+                    "model_type": record["model_type"],
+                    "endpoint_name": record["model_endpoint"],
+                    "status": record["model_status"],
+                }
+                for record in records
+            ],
+        }
+
+        return resp, 200
 
 
 get_status_parser = ns.parser()

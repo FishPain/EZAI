@@ -15,6 +15,7 @@ from app.core.SagemakerManager import SagemakerManager
 
 import logging
 
+
 def init_app():
     """Spawns the application"""
 
@@ -32,7 +33,9 @@ def init_app():
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
     # Set up logging
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s"
+    )
     app.logger.setLevel(logging.DEBUG)
 
     # Register application endpoints using Blueprint
@@ -94,7 +97,7 @@ def init_app():
     def main():
         return render_template("main.html")
 
-    @app.route("/process")
+    @app.route("/inference")
     def process():
         return render_template("process.html")
 
