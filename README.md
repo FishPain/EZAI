@@ -4,15 +4,14 @@
 1. [Introduction](#introduction)
 2. [System Requirements](#system-requirements)
 3. [Installation](#installation)
-4. [Configuration](#configuration)
 5. [Operation](#operation)
-   - [Logging In](#logging-in)
+   - [Website URL](#website-url)
    - [Registering Models](#registering-models)
    - [Deploying Models](#deploying-models)
    - [Managing Jobs](#managing-jobs)
-6. [Troubleshooting](#troubleshooting)
-7. [Security](#security)
-8. [Support](#support)
+7. [Troubleshooting](#troubleshooting)
+8. [Security](#security)
+9. [Support](#support)
 
 ---
 
@@ -20,63 +19,48 @@
 **EZAI** is a tool designed to manage and deploy machine learning models with ease. It uses Celery workers, SageMaker, and a structured relational database to facilitate efficient model management, allowing users to register and deploy models, track job statuses, and manage model endpoints.
 
 ## **System Requirements**
-- Python 3.8 or higher
+- Python 3.9 or higher
 - Redis and RabbitMQ for Celery
 - AWS SageMaker with appropriate permissions
-- PostgreSQL or MySQL database
-- Docker (optional, for containerization)
+- PostgreSQL
+- Docker (for containerization)
 
 ## **Installation**
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/your-repo/HF-Clone.git
-   cd HF-Clone
+   git clone https://github.com/fishpain/ezai.git
+   cd ezai
    ```
 
-2. **Install Dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Environment Configuration:**
+2. **Environment Configuration:**
    - Copy the `.env.example` file to `.env`:
      ```bash
      cp .env.example .env
      ```
    - Update `.env` with your environment-specific variables, such as `DATABASE_URI`, `RABBITMQ_URI`, and AWS credentials for SageMaker.
+   > Note: Email 2302705 at sit.singaporetech.edu.sg for env file.
 
-4. **Database Setup:**
-   - Set up the database schema by running:
-     ```bash
-     python -c "from app.models.models import Base, engine; Base.metadata.create_all(engine)"
-     ```
 
-5. **Start Redis and RabbitMQ Services:**
-   - If you are using Docker, you can start these with:
-     ```bash
-     docker-compose up -d
-     ```
+3. **Build Application, RabbitMQ, Database through:**
+   ```bash
+   cd hf_api/docker && docker compose -f docker-compose-local-x86.yml up -d
+   ```
+   > Note: Above command is to build for X86 platform, aka windows.
+   > To build on ARM achitechture, you have to edit the `requirements.txt` file and choose `libs/h5py-3.9.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl` instead.
+   > Then build the `docker-compose-local-arm.yml` instead.
 
-## **Configuration**
-
-1. **Environment Variables:**
-   - Open `.env` and configure:
-     - `DATABASE_URI`: The connection string for your database.
-     - `RABBITMQ_URI`: The URI for your RabbitMQ instance.
-     - `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`: Your AWS credentials.
-     - `SECRET_KEY`: Your application's secret key for JWT.
-
-2. **Celery Worker Configuration:**
-   - Start a Celery worker using the configured broker:
-     ```bash
-     celery -A app.tasks worker --loglevel=info
-     ```
 
 ## **Operation**
 
+### **Website URL**
+- Website URL available at `localhost:5051/`
+- Swagger API Available at `localhost:5051/v1/docs/`
+> Application supports Chrome and Safari. Not IE.
+
 ### **Logging In**
 - Users authenticate via a token-based system. Provide a valid token for operations that require user-specific access.
+> Note: Please enable cookie and javascript on your browser.
 
 ### **Registering Models**
 - Call the `/register` endpoint or use the `register_model_worker` task to register a new model with SageMaker. This will:
@@ -118,4 +102,4 @@
 
 ## **Support**
 
-For further support, please contact the development team or refer to the official documentation on GitHub at [GitHub Repository](https://github.com/your-repo/HF-Clone).
+For further support, please contact the development team or refer to the official documentation on GitHub at [GitHub Repository](https://github.com/fishpain/ezai).
