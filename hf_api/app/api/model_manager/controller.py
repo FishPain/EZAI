@@ -1,7 +1,12 @@
 from flask import request
 from flask_restx import Namespace, Resource, fields
 
-from app.api.model_manager.handler import push_to_s3, download_from_s3, get_all_models
+from app.api.model_manager.handler import (
+    push_to_s3,
+    download_from_s3,
+    get_all_models,
+    search_models,
+)
 from app.core.auth_utils import token_required
 
 ns = Namespace("Model Manager", description="Model management operations")
@@ -179,4 +184,21 @@ class ModelManagerInfo(Resource):
         top_n = request.args.get("top_n")
         user_id = request.args.get("user_uuid")
         resp = get_all_models(user_id, top_n)
+        return {"message": "Model retrieved successfully", "body": resp}, 200
+
+
+search_parser = ns.parser()
+search_parser.add_argument(
+    "q", type=str, required=True, help="The search query for model"
+)
+
+
+@ns.expect(search_parser)
+@ns.route("/search")
+class ModelManagerSearch(Resource):
+    @ns.expect(get_parser)
+    @ns.response(200, "Success", get_model_fields)
+    def get(self):
+        q = request.args.get("q")
+        resp = search_models(q)
         return {"message": "Model retrieved successfully", "body": resp}, 200

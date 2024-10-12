@@ -533,5 +533,4 @@ def get_registered_model_by_user_uuid(user_uuid: str):
         }
         resp.append(model_dict)
 
-    print(resp)
     return resp

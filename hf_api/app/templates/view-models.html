@@ -17,8 +17,7 @@
         <div class="container d-flex justify-content-between">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EZAI Logo" width="50" height="50">
             <div class="auth-section d-flex align-items-center">
-                <a href="/" class="btn btn-link">Back</a>
-                <button id="logoutBtn" class="btn btn-outline-danger ms-2">Logout</button>
+                <a class="btn btn-outline-secondary ms-2" a href="/">Back</a>
             </div>
         </div>
     </nav>
@@ -43,7 +42,6 @@
                             onchange="filterModels()">
                         <label class="form-check-label" for="pytorchCheckbox">PyTorch</label>
                     </li>
-
                     <!-- Registered Status Filter -->
                     <li class="list-group-item mt-3">
                         <input class="form-check-input me-1" type="checkbox" id="registeredCheckbox"
@@ -70,6 +68,12 @@
                                 <a class="nav-link" href="/view-contributors">Top Model Contributors</a>
                             </li>
                         </ul>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="input-group mb-3">
+                        <input type="text" id="searchQuery" class="form-control" placeholder="Search models..."
+                            oninput="filterModels()">
                     </div>
 
                     <div class="container">
@@ -108,6 +112,12 @@
         let models = [];
         let currentSort = { column: null, direction: 'asc', type: 'text' };
 
+        // Function to get the query parameter from the URL
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
         // Fetch data from the API and populate the table with applied filters
         async function fetchModelData() {
             try {
@@ -116,11 +126,16 @@
 
                 if (data && data.body) {
                     models = data.body; // Update the global models variable
-                    filterModels(); // Reapply filters after updating the model data
 
-                    // Reapply the sorting
+                    // Apply URL query if present before filtering
+                    const query = getQueryParam('q');
+                    if (query) {
+                        document.getElementById('searchQuery').value = query.toLowerCase();
+                    }
+
+                    filterModels(); // Apply filters and search query
                     if (currentSort.column !== null) {
-                        sortTable(currentSort.column, currentSort.type, true);
+                        sortTable(currentSort.column, currentSort.type, true); // Apply sorting if needed
                     }
                 } else {
                     console.error("Invalid data format", data);
@@ -128,6 +143,39 @@
             } catch (error) {
                 console.error("Error fetching model data:", error);
             }
+        }
+
+        // Function to filter the table based on selected checkboxes and search query
+        function filterModels() {
+            const allCheckbox = document.getElementById('allCheckbox').checked;
+            const tensorflowCheckbox = document.getElementById('tensorflowCheckbox').checked;
+            const pytorchCheckbox = document.getElementById('pytorchCheckbox').checked;
+            const registeredCheckbox = document.getElementById('registeredCheckbox').checked;
+            const unregisteredCheckbox = document.getElementById('unregisteredCheckbox').checked;
+            const searchQuery = document.getElementById('searchQuery').value.toLowerCase();
+
+            const filteredModels = models.filter(model => {
+                const modelType = model.model_type.toLowerCase();
+                const modelName = model.model_name.toLowerCase();
+
+                // Check Model Type filter
+                if (!allCheckbox) {
+                    if (tensorflowCheckbox && modelType !== 'tensorflow') return false;
+                    if (pytorchCheckbox && modelType !== 'pytorch') return false;
+                    if (!tensorflowCheckbox && !pytorchCheckbox) return false;
+                }
+
+                // Check Registered Status filter
+                if (registeredCheckbox && !model.registered) return false;
+                if (unregisteredCheckbox && model.registered) return false;
+
+                // Check search query filter
+                if (searchQuery && !modelName.includes(searchQuery)) return false;
+
+                return true; // Passes all checks
+            });
+
+            populateModelTable(filteredModels); // Re-populate the table with filtered data
         }
 
         // Function to populate the table with model data
@@ -145,34 +193,6 @@
                 row.insertCell(4).textContent = model.run_count;
                 row.insertCell(5).textContent = model.registered ? 'Yes' : 'No';
             });
-        }
-
-        // Function to filter the table based on selected checkboxes
-        function filterModels() {
-            const allCheckbox = document.getElementById('allCheckbox').checked;
-            const tensorflowCheckbox = document.getElementById('tensorflowCheckbox').checked;
-            const pytorchCheckbox = document.getElementById('pytorchCheckbox').checked;
-            const registeredCheckbox = document.getElementById('registeredCheckbox').checked;
-            const unregisteredCheckbox = document.getElementById('unregisteredCheckbox').checked;
-
-            const filteredModels = models.filter(model => {
-                const modelType = model.model_type.toLowerCase();
-
-                // Check Model Type filter
-                if (!allCheckbox) {
-                    if (tensorflowCheckbox && modelType !== 'tensorflow') return false;
-                    if (pytorchCheckbox && modelType !== 'pytorch') return false;
-                    if (!tensorflowCheckbox && !pytorchCheckbox) return false;
-                }
-
-                // Check Registered Status filter
-                if (registeredCheckbox && !model.registered) return false;
-                if (unregisteredCheckbox && model.registered) return false;
-
-                return true; // Passes all checks
-            });
-
-            populateModelTable(filteredModels); // Re-populate the table with filtered data
         }
 
         // Sort function to sort the table columns with arrow icons
@@ -238,7 +258,6 @@
         // Initial fetch of model data when the page loads
         window.onload = fetchModelData;
     </script>
-
 </body>
 
 </html>

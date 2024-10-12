@@ -9,8 +9,17 @@ from app.models.models import (
     InferenceModel,
     get_model_run_counts_with_details,
     get_model_run_counts_with_details_filter,
+    search_for_models,
 )
 
+def search_models(query: str) -> dict:
+    try:
+        models = search_for_models(query)
+        print(models)
+    except Exception as e:
+        raise Exception(f"Failed to search for the model: {e}")
+
+    return models
 
 def get_all_models(user_uuid: str = None, top_n: int = None) -> dict:
     """

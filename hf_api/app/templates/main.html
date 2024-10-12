@@ -22,16 +22,6 @@
             padding: 1rem;
         }
 
-        .navbar a {
-            color: #333;
-            text-decoration: none;
-            margin: 0 10px;
-        }
-
-        .navbar a:hover {
-            color: #007bff;
-        }
-
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -99,7 +89,17 @@
     <div class="header">
         <h1>EZAI</h1>
         <p>Access to thousands of AI models with one click</p>
-        <a href="/model" class="btn btn-dark">Get Started</a>
+        <a href="/model" class="btn btn-dark mb-3">Get Started</a>
+        <!-- Search Bar -->
+        <!-- Search Bar -->
+        <div class="input-group w-50 mx-auto" style="position: relative;">
+            <input type="text" id="searchBar" class="form-control" placeholder="Search for AI models..."
+                oninput="searchModels()">
+            <button class="btn btn-outline-secondary" type="button" onclick="executeSearch()">Search</button>
+            <!-- Dropdown Container for Search Results -->
+            <div id="searchResults" class="dropdown-menu w-100"
+                style="position: absolute; top: 100%; left: 0; display: none;"></div>
+        </div>
     </div>
 
     <!-- Trending Models Section -->
@@ -128,17 +128,15 @@
     </div>
 
     <script>
-        // Function to update the auth section based on the presence of an auth token
         function updateAuthSection() {
             const authSection = document.getElementById('authSection');
             const authToken = localStorage.getItem('authToken');
 
             if (authToken) {
                 authSection.innerHTML = `
-                    <a href="/profile">Profile</a>
-                    <a href="/" id="logoutLink">Logout</a>
+                    <a class="btn btn-outline-secondary" href="/profile">Profile</a>
+                    <a class="btn btn-outline-secondary" href="/" id="logoutLink">Logout</a>
                 `;
-
                 document.getElementById('logoutLink').addEventListener('click', function (event) {
                     event.preventDefault();
                     localStorage.removeItem('authToken');
@@ -146,18 +144,16 @@
                 });
             } else {
                 authSection.innerHTML = `
-                    <a href="/signin">Sign In</a>
-                    <a href="/signup">Sign Up</a>
+                    <a class="btn btn-outline-secondary ms-2" href="/signin">Sign In</a>
+                    <a class="btn btn-outline-secondary ms-2" href="/signup">Sign Up</a>
                 `;
             }
         }
 
-        // Function to populate the model grid
         function generateModelGrid(models) {
             const modelContainer = document.getElementById('modelContainer');
             modelContainer.innerHTML = '';
 
-            let rowDiv;
             models.forEach((model, index) => {
                 if (index % 3 === 0) {
                     rowDiv = document.createElement('div');
@@ -189,12 +185,10 @@
             });
         }
 
-        // Function to populate the contributor grid
         function generateContributorGrid(contributors) {
             const contributorContainer = document.getElementById('contributorContainer');
             contributorContainer.innerHTML = '';
 
-            let rowDiv;
             contributors.forEach((contributor, index) => {
                 if (index % 3 === 0) {
                     rowDiv = document.createElement('div');
@@ -221,15 +215,13 @@
             });
         }
 
-        // Fetch model data and populate grid
         async function fetchModelData() {
             try {
                 const response = await fetch('/v1/api/model_manager/all?top_n=3');
                 const data = await response.json();
 
                 if (data && data.body) {
-                    const models = data.body;
-                    generateModelGrid(models);
+                    generateModelGrid(data.body);
                 } else {
                     console.error("Invalid data format", data);
                 }
@@ -238,15 +230,13 @@
             }
         }
 
-        // Fetch contributor data and populate grid
         async function fetchContributorData() {
             try {
                 const response = await fetch('/v1/api/user/contributors?top_n=3');
                 const data = await response.json();
 
                 if (data.contributors) {
-                    const contributors = data.contributors;
-                    generateContributorGrid(contributors);
+                    generateContributorGrid(data.contributors);
                 } else {
                     console.error("Invalid data format", data);
                 }
@@ -255,7 +245,50 @@
             }
         }
 
-        // Initialize the page
+        async function searchModels() {
+            const query = document.getElementById('searchBar').value.trim();
+            const searchResultsContainer = document.getElementById('searchResults');
+
+            // If query is empty, hide the search results
+            if (!query) {
+                searchResultsContainer.style.display = 'none';
+                return;
+            }
+
+            try {
+                // Call the search API with the query
+                const response = await fetch(`/v1/api/model_manager/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                console.log(data.body);
+                // Clear any existing results
+                searchResultsContainer.innerHTML = '';
+
+                if (data && data.body && data.body.length > 0) {
+                    // Populate dropdown with search results
+                    data.body.forEach(model => {
+                        const item = document.createElement('a');
+                        item.className = 'dropdown-item';
+                        item.href = `/view-models?q=${encodeURIComponent(model.model_name)}`;
+                        item.textContent = model.model_name;
+                        searchResultsContainer.appendChild(item);
+                    });
+                    searchResultsContainer.style.display = 'block';
+                } else {
+                    // Hide dropdown if no results found
+                    searchResultsContainer.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error fetching search results:', error);
+            }
+        }
+
+        function executeSearch() {
+            const query = document.getElementById('searchBar').value.trim();
+            if (query) {
+                window.location.href = `/view-models?q=${encodeURIComponent(query)}`;
+            }
+        }
+
         updateAuthSection();
         fetchModelData();
         fetchContributorData();
