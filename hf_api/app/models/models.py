@@ -366,6 +366,7 @@ def get_model_run_counts_with_details():
     try:
         model_run_counts = (
             session.query(
+                MLModel.model_uuid,
                 ModelRegistryModel.model_registry_uuid,
                 ModelRegistryModel.model_version,
                 func.coalesce(func.count(InferenceModel.model_registry_uuid), 0).label(
@@ -374,35 +375,38 @@ def get_model_run_counts_with_details():
                 MLModel.model_name,
                 MLModel.model_type,
                 MLModel.upload_datetime,
-                # Cast the boolean case expression to Integer before applying max
-                func.max(
+                # Determine registration status based on presence in ModelRegistryModel
+                func.coalesce(
                     cast(
                         case(
                             (
-                                InferenceModel.model_registry_uuid.isnot(None),
+                                ModelRegistryModel.model_registry_uuid.isnot(None),
                                 literal(True),
                             ),
                             else_=literal(False),
                         ),
                         Integer,
-                    )
+                    ),
+                    0,
                 ).label("registered"),
             )
             .outerjoin(
-                InferenceModel,
-                InferenceModel.model_registry_uuid
-                == ModelRegistryModel.model_registry_uuid,
+                ModelRegistryModel, MLModel.model_uuid == ModelRegistryModel.model_uuid
             )
-            .join(MLModel, ModelRegistryModel.model_uuid == MLModel.model_uuid)
+            .outerjoin(
+                InferenceModel,
+                ModelRegistryModel.model_registry_uuid
+                == InferenceModel.model_registry_uuid,
+            )
             .group_by(
+                MLModel.model_uuid,
                 ModelRegistryModel.model_registry_uuid,
                 ModelRegistryModel.model_version,
                 MLModel.model_name,
                 MLModel.model_type,
                 MLModel.upload_datetime,
             )
-            .all()
-        )
+        ).all()
     except Exception as e:
         # Roll back the session in case of any error
         session.rollback()
@@ -411,13 +415,14 @@ def get_model_run_counts_with_details():
     resp = []
     for model in model_run_counts:
         model_dict = {
+            "model_uuid": model.model_uuid,
             "model_registry_uuid": model.model_registry_uuid,
             "model_version": model.model_version,
             "run_count": model.run_count if model.registered else 0,
             "model_name": model.model_name,
             "model_type": model.model_type,
             "upload_datetime": model.upload_datetime.isoformat(),
-            "registered": bool(model.registered),  # Convert back to boolean
+            "registered": bool(model.registered),
         }
         resp.append(model_dict)
 
@@ -427,45 +432,54 @@ def get_model_run_counts_with_details():
 def get_model_run_counts_with_details_filter(top_n):
     try:
         model_run_counts = (
-            session.query(
-                ModelRegistryModel.model_registry_uuid,
-                ModelRegistryModel.model_version,
-                func.coalesce(func.count(InferenceModel.model_registry_uuid), 0).label(
-                    "run_count"
-                ),
-                MLModel.model_name,
-                MLModel.model_type,
-                MLModel.upload_datetime,
-                # Cast the boolean case expression to Integer before applying max
-                func.max(
-                    cast(
-                        case(
-                            (
-                                InferenceModel.model_registry_uuid.isnot(None),
-                                literal(True),
+            (
+                session.query(
+                    MLModel.model_uuid,
+                    ModelRegistryModel.model_registry_uuid,
+                    ModelRegistryModel.model_version,
+                    func.coalesce(
+                        func.count(InferenceModel.model_registry_uuid), 0
+                    ).label("run_count"),
+                    MLModel.model_name,
+                    MLModel.model_type,
+                    MLModel.upload_datetime,
+                    # Determine registration status based on presence in ModelRegistryModel
+                    func.coalesce(
+                        cast(
+                            case(
+                                (
+                                    ModelRegistryModel.model_registry_uuid.isnot(None),
+                                    literal(True),
+                                ),
+                                else_=literal(False),
                             ),
-                            else_=literal(False),
+                            Integer,
                         ),
-                        Integer,
-                    )
-                ).label("registered"),
+                        0,
+                    ).label("registered"),
+                )
+                .outerjoin(
+                    ModelRegistryModel,
+                    MLModel.model_uuid == ModelRegistryModel.model_uuid,
+                )
+                .outerjoin(
+                    InferenceModel,
+                    ModelRegistryModel.model_registry_uuid
+                    == InferenceModel.model_registry_uuid,
+                )
+                .group_by(
+                    MLModel.model_uuid,
+                    ModelRegistryModel.model_registry_uuid,
+                    ModelRegistryModel.model_version,
+                    MLModel.model_name,
+                    MLModel.model_type,
+                    MLModel.upload_datetime,
+                )
             )
-            .outerjoin(
-                InferenceModel,
-                InferenceModel.model_registry_uuid
-                == ModelRegistryModel.model_registry_uuid,
-            )
-            .join(MLModel, ModelRegistryModel.model_uuid == MLModel.model_uuid)
-            .group_by(
-                ModelRegistryModel.model_registry_uuid,
-                ModelRegistryModel.model_version,
-                MLModel.model_name,
-                MLModel.model_type,
-                MLModel.upload_datetime,
-            )
-            .order_by(desc("run_count"))  # Corrected to order by descending
+            .order_by(desc("run_count"))
             .limit(top_n)
-        ).all()  # .all() to execute the query
+            .all()
+        )
     except Exception as e:
         # Roll back the session in case of any error
         session.rollback()

@@ -149,7 +149,11 @@ class UserContributors(Resource):
                     {
                         "contributor_name": contributor.username,
                         "contribution_count": contributor.contribution_count,
-                        "last_contribution_date": contributor.last_contribution_date.isoformat(),
+                        "last_contribution_date": (
+                            contributor.last_contribution_date.isoformat()
+                            if contributor.last_contribution_date
+                            else None
+                        ),
                     }
                 )
 

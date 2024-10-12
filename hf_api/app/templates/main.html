@@ -90,8 +90,7 @@
         <h1>EZAI</h1>
         <p>Access to thousands of AI models with one click</p>
         <a href="/model" class="btn btn-dark mb-3">Get Started</a>
-        <!-- Search Bar -->
-        <!-- Search Bar -->
+        <a href="/inference" class="btn btn-dark mb-3">Try Out a Model</a>
         <div class="input-group w-50 mx-auto" style="position: relative;">
             <input type="text" id="searchBar" class="form-control" placeholder="Search for AI models..."
                 oninput="searchModels()">
@@ -206,7 +205,13 @@
                 userName.textContent = contributor.contributor_name;
 
                 const userDetails = document.createElement('p');
-                userDetails.innerHTML = `Contributions: ${contributor.contribution_count}<br>Last Contributed: ${new Date(contributor.last_contribution_date).toLocaleDateString()}`;
+                if (contributor.last_contribution_date === null) {
+                    last_contribution_date = 'N/A';
+                }
+                else {
+                    last_contribution_date = new Date(contributor.last_contribution_date).toLocaleDateString();
+                }
+                userDetails.innerHTML = `Contributions: ${contributor.contribution_count}<br>Last Contributed: ${last_contribution_date}`;
 
                 cardDiv.appendChild(userName);
                 cardDiv.appendChild(userDetails);

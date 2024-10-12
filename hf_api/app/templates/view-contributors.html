@@ -111,9 +111,16 @@
 
             contributorData.forEach(contributor => {
                 const row = tbody.insertRow();
+                if (contributor.last_contribution_date === null) {
+                    last_contribution_date = 'N/A';
+                }
+                else {
+                    last_contribution_date = new Date(contributor.last_contribution_date).toLocaleDateString();
+                }
+
                 row.insertCell(0).textContent = contributor.contributor_name;
                 row.insertCell(1).textContent = contributor.contribution_count;
-                row.insertCell(2).textContent = new Date(contributor.last_contribution_date).toLocaleDateString();
+                row.insertCell(2).textContent = last_contribution_date;
             });
         }
 

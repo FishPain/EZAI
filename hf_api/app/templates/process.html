@@ -128,7 +128,7 @@
 
             const formData = new FormData();
             formData.append('inference_data', file, file.name); // Append file with its name
-
+            console.log(modelId);
             try {
                 const response = await fetch(`/v1/api/inference/?uuid=${modelId}`, {
                     method: 'POST',
@@ -142,7 +142,7 @@
                 const data = await response.json();
 
                 // Option 1: Save inference_result directly from response data if it’s meant to be JSON
-                const blob = new Blob([JSON.stringify(data.inference_result)], { type: 'application/json' });
+                const blob = new Blob([JSON.stringify(data.body.inference_result)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -151,7 +151,7 @@
                 URL.revokeObjectURL(url);  // Clean up
 
                 // Display the result and handle the inferenceOutputUrl if available
-                document.getElementById('inferenceResult').textContent = JSON.stringify(data.inference_result, null, 2);
+                document.getElementById('inferenceResult').textContent = JSON.stringify(data.body.inference_result, null, 2);
                 inferenceOutputUrl = data.inference_output_url;  // Ensure this is correctly set from response
                 inferenceModal.show();
             } catch (error) {
