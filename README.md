@@ -17,6 +17,7 @@
 
 ## **Introduction**
 **EZAI** is a tool designed to manage and deploy machine learning models with ease. It uses Celery workers, SageMaker, and a structured relational database to facilitate efficient model management, allowing users to register and deploy models, track job statuses, and manage model endpoints.
+> Note: All the data are user generated content. Therefore you'll be shown an empty database upon hosting it.
 
 ## **System Requirements**
 - Python 3.9 or higher
