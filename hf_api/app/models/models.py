@@ -13,6 +13,8 @@ def to_namespace(data):
     return None
 
 
+
+
 class UserModel:
     collection = db["user_model"]
 
@@ -135,6 +137,20 @@ class MLModel:
     @staticmethod
     def get_all_models():
         return list(to_namespace(MLModel.collection.find()))
+
+    # allow user to update model type
+    @staticmethod
+    def update_model_type(model_uuid: str, new_model_type: str, current_version: int):
+        result = MLModel.collection.update_one(
+            {"model_uuid": model_uuid, "version": current_version},
+            {"$set": {"model_type": new_model_type}, "$inc": {"version": 1}},
+        )
+        if result.matched_count == 0:
+            raise Exception("Version mismatch or model not found. Retry the update.")
+
+        # Fetch and return the updated model
+        updated_model = MLModel.collection.find_one({"model_uuid": model_uuid})
+        return updated_model
 
 
 class ModelRegistryModel:
