@@ -95,13 +95,7 @@ class UserModel:
 class MLModel:
     collection = db["ml_model"]
 
-    def __init__(
-        self,
-        user_uuid,
-        model_name,
-        model_type,
-        s3_url
-    ):
+    def __init__(self, user_uuid, model_name, model_type, s3_url):
         self.model_uuid = str(uuid.uuid4())
         self.user_uuid = user_uuid
         self.upload_datetime = datetime.now()
@@ -551,8 +545,8 @@ def get_registered_model_by_user_uuid(user_uuid):
                 "model_registry_uuid": record["model_registry_uuid"],
                 "model_name": record["model_name"],
                 "model_type": record["model_type"],
-                "endpoint_name": record["model_endpoint"],
-                "status": record["model_status"],
+                "model_endpoint": record["model_endpoint"],
+                "model_status": record["model_status"],
             }
         )
 
