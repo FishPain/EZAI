@@ -3,9 +3,6 @@ from datetime import datetime
 from pymongo import MongoClient, DESCENDING
 from types import SimpleNamespace
 
-client = MongoClient(os.getenv("DATABASE_URI"))
-db = client.get_database()
-
 
 def to_namespace(data):
     if data:
@@ -13,6 +10,26 @@ def to_namespace(data):
     return None
 
 
+def add_indexing():
+    # UserModel Indexing
+    db["user_model"].create_index([("email", DESCENDING)], unique=True)
+    db["user_model"].create_index([("username", DESCENDING)], unique=True)
+
+    # MLModel Indexing
+    db["ml_model"].create_index([("model_name", DESCENDING)], unique=True)
+    db["model_registry_model"].create_index([("model_uuid", DESCENDING)], unique=True)
+
+    # InferenceModel Indexing
+    db["inference_model"].create_index(
+        [("model_registry_uuid", DESCENDING)], unique=True
+    )
+    db["jobs_model"].create_index([("job_uuid", DESCENDING)], unique=True)
+
+
+client = MongoClient(os.getenv("DATABASE_URI"))
+db = client.get_database()
+
+add_indexing()
 
 
 class UserModel:
