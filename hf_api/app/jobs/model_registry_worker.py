@@ -28,7 +28,11 @@ def register_model_worker(self, user_uuid: str, model_uuid: str) -> tuple:
     self.request.kwargs = {"user_uuid": user_uuid}
 
     sm = SagemakerManager(bucket_name=sm_constants.BUCKET_NAME, role=sm_constants.ROLE)
+
     record = MLModel.get_record_by_uuid(model_uuid)
+    if not record:
+        raise Exception(f"Model with UUID {model_uuid} not found")
+    
     model = sm.create_model(model_path=record.s3_url, model_type=record.model_type)
 
     dummy_uuid_generator = str(uuid.uuid4())

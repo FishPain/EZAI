@@ -8,6 +8,7 @@ from app.core.auth_utils import (
     generate_token,
     token_required,
 )
+import logging
 
 ns = Namespace("User", description="User Authentication Endpoints")
 
@@ -72,7 +73,6 @@ class UserLogin(Resource):
 
             # Fetch the user by email
             user = UserModel.get_user_by_email(email)
-
             if not user:
                 return {"message": "User not found"}, 404
 

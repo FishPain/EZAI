@@ -16,6 +16,7 @@ psycopg2-binary
 celery
 supervisor~=4.2
 bcrypt
+pymongo
 # Optional dependencies: Can remove if unused
 gunicorn
 python-dotenv

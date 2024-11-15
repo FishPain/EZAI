@@ -26,7 +26,7 @@ def init_app():
     # Set Flask configuration
     app.config["ERROR_404_HELP"] = False
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
+    app.config["DATABASE_URI"] = os.getenv("DATABASE_URI")
 
     os.environ["SECRET_KEY"] = secrets.token_urlsafe(16)
 

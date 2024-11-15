@@ -16,7 +16,8 @@ services:
       DATABASE_USER: admin
       DATABASE_PASSWORD: password
       DATABASE_NAME: postgres
-      DATABASE_URI: postgresql://admin:password@db:5432/postgres
+      # DATABASE_URI: postgresql://admin:password@db:5432/postgres
+      DATABASE_URI: mongodb://localhost:27017
       RABBITMQ_URI: amqp://guest:guest@rabbitmq:5672
       AWS_DEFAULT_REGION: ap-southeast-1
       SQLALCHEMY_TRACK_MODIFICATIONS": False
@@ -35,3 +36,13 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+  
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

@@ -1,129 +1,113 @@
 import uuid, os, bcrypt
 from datetime import datetime
+from pymongo import MongoClient, DESCENDING
+from types import SimpleNamespace
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy import (
-    Column,
-    String,
-    DateTime,
-    ForeignKey,
-    func,
-    case,
-    literal,
-    cast,
-    Integer,
-    desc,
-)
-
-engine = create_engine(os.getenv("DATABASE_URI"))
-
-Base = declarative_base()
-
-session = sessionmaker(bind=engine)()
+client = MongoClient(os.getenv("DATABASE_URI"))
+db = client.get_database()
 
 
-class UserModel(Base):
-    __tablename__ = "user_model"
-    user_uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    username = Column(String(80), nullable=False)
-    email = Column(String(120), unique=True, nullable=False)
-    password = Column(String(128), nullable=False)
+def to_namespace(data):
+    if data:
+        return SimpleNamespace(**data)
+    return None
 
-    def __init__(self, username, email, password):
+
+class UserModel:
+    collection = db["user_model"]
+
+    def __init__(self, username, email, password, user_uuid=None):
+        self.user_uuid = str(uuid.uuid4()) if not user_uuid else user_uuid
         self.username = username
         self.email = email
         self.password = password
-
-    def __repr__(self):
-        return f"<UserModel {self.user_uuid}>"
 
     def to_dict(self):
         return {
             "user_uuid": self.user_uuid,
             "username": self.username,
             "email": self.email,
-            # Do not include password for security reasons
         }
+
+    @classmethod
+    def from_dict(cls, data):
+        if data:
+            return cls(
+                user_uuid=data.get("user_uuid"),
+                username=data.get("username"),
+                email=data.get("email"),
+                password=data.get("password"),
+            )
+        return None
 
     @staticmethod
     def create_user(username, email, password):
-        # if user exists, raise an exception
         if UserModel.get_user_by_email(email) or UserModel.get_user_by_username(
             username
         ):
             raise Exception("User already exists")
-
         new_user = UserModel(username=username, email=email, password=password)
-
-        session.add(new_user)
-        session.commit()
+        UserModel.collection.insert_one(new_user.__dict__)
         return new_user.user_uuid
 
     @staticmethod
     def get_user_by_email(email):
-        return session.query(UserModel).filter_by(email=email).first()
+        return UserModel.from_dict(UserModel.collection.find_one({"email": email}))
 
     @staticmethod
     def get_user_by_username(username):
-        return session.query(UserModel).filter_by(username=username).first()
-
-    @staticmethod
-    def get_hashed_password_by_username(username):
-        user = session.query(UserModel).filter_by(username=username).first()
-        if user:
-            return user.password
-        return None
+        return UserModel.from_dict(
+            UserModel.collection.find_one({"username": username})
+        )
 
     @staticmethod
     def get_user_record_by_uuid(user_uuid):
-        return session.query(UserModel).filter_by(user_uuid=user_uuid).first()
-
-    @staticmethod
-    def get_contributors_with_contributions(top_n: int = None):
-        if top_n:
-            return (
-                session.query(
-                    UserModel.username,
-                    func.count(JobsModel.job_uuid).label("contribution_count"),
-                    func.max(JobsModel.job_datetime).label("last_contribution_date"),
-                )
-                .outerjoin(JobsModel, UserModel.user_uuid == JobsModel.user_uuid)
-                .group_by(UserModel.user_uuid)
-                .order_by(desc("contribution_count"))
-                .limit(top_n)
-                .all()
-            )
-
-        return (
-            session.query(
-                UserModel.username,
-                func.count(JobsModel.job_uuid).label("contribution_count"),
-                func.max(JobsModel.job_datetime).label("last_contribution_date"),
-            )
-            .outerjoin(JobsModel, UserModel.user_uuid == JobsModel.user_uuid)
-            .group_by(UserModel.user_uuid)
-            .all()
+        return UserModel.from_dict(
+            UserModel.collection.find_one({"user_uuid": user_uuid})
         )
 
+    @staticmethod
+    def get_contributors_with_contributions(top_n=None):
+        pipeline = [
+            {
+                "$lookup": {
+                    "from": "jobs_model",
+                    "localField": "user_uuid",
+                    "foreignField": "user_uuid",
+                    "as": "jobs",
+                }
+            },
+            {
+                "$project": {
+                    "username": 1,
+                    "contribution_count": {"$size": "$jobs"},
+                    "last_contribution_date": {"$max": "$jobs.job_datetime"},
+                }
+            },
+            {"$sort": {"contribution_count": -1}},
+        ]
+        if top_n:
+            pipeline.append({"$limit": int(top_n)})
+        count = list(UserModel.collection.aggregate(pipeline))
+        return [to_namespace(user) for user in count]
 
-class MLModel(Base):
-    __tablename__ = "ml_model"
-    model_uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_uuid = Column(String(36), ForeignKey("user_model.user_uuid"), nullable=False)
-    upload_datetime = Column(DateTime, nullable=False, default=datetime.now())
-    model_name = Column(String(80), nullable=True)
-    model_type = Column(String(80), nullable=True)
-    s3_url = Column(String(200), unique=True, nullable=False)
 
-    def __init__(self, user_uuid, model_name, model_type, s3_url):
+class MLModel:
+    collection = db["ml_model"]
+
+    def __init__(
+        self,
+        user_uuid,
+        model_name,
+        model_type,
+        s3_url
+    ):
+        self.model_uuid = str(uuid.uuid4())
         self.user_uuid = user_uuid
+        self.upload_datetime = datetime.now()
         self.model_name = model_name
         self.model_type = model_type
         self.s3_url = s3_url
-
-    def __repr__(self):
-        return f"<MLModel {self.model_uuid}>"
 
     def to_dict(self):
         return {
@@ -143,41 +127,52 @@ class MLModel(Base):
             model_type=model_type,
             s3_url=s3_url,
         )
-        session.add(model)
-        session.commit()
+        MLModel.collection.insert_one(model.__dict__)
         return model.model_uuid
 
     @staticmethod
     def get_record_by_uuid(model_uuid):
-        return session.query(MLModel).filter_by(model_uuid=model_uuid).first()
+        return to_namespace(MLModel.collection.find_one({"model_uuid": model_uuid}))
 
     @staticmethod
     def get_all_models_by_user_uuid(user_uuid):
-        return session.query(MLModel).filter_by(user_uuid=user_uuid).all()
+        return list(to_namespace(MLModel.collection.find({"user_uuid": user_uuid})))
 
     @staticmethod
     def get_all_models():
-        return session.query(MLModel).all()
+        return list(to_namespace(MLModel.collection.find()))
 
 
-class ModelRegistryModel(Base):
-    __tablename__ = "model_registry_model"
-    model_registry_uuid = Column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
-    )
-    model_uuid = Column(String(36), ForeignKey("ml_model.model_uuid"), nullable=False)
-    model_version = Column(String(80), nullable=False)
-    model_status = Column(String(80), nullable=False)
-    model_endpoint = Column(String(200), nullable=False)
+class ModelRegistryModel:
+    collection = db["model_registry_model"]
 
-    def __repr__(self):
-        return f"<ModelRegistry {self.model_registry_uuid}>"
-
-    def __init__(self, model_uuid, model_version, model_status, model_endpoint):
+    def __init__(
+        self,
+        model_uuid,
+        model_version,
+        model_status,
+        model_endpoint,
+        model_registry_uuid=None,
+    ):
+        self.model_registry_uuid = (
+            str(uuid.uuid4()) if not model_registry_uuid else model_registry_uuid
+        )
         self.model_uuid = model_uuid
         self.model_version = model_version
         self.model_status = model_status
         self.model_endpoint = model_endpoint
+
+    @classmethod
+    def from_dict(cls, data):
+        if data:
+            return cls(
+                model_registry_uuid=data.get("model_registry_uuid"),
+                model_uuid=data.get("model_uuid"),
+                model_version=data.get("model_version"),
+                model_status=data.get("model_status"),
+                model_endpoint=data.get("model_endpoint"),
+            )
+        return None
 
     @staticmethod
     def register_model(model_uuid, model_version, model_status, model_endpoint):
@@ -187,141 +182,134 @@ class ModelRegistryModel(Base):
             model_status=model_status,
             model_endpoint=model_endpoint,
         )
-        session.add(model)
-        session.commit()
+        ModelRegistryModel.collection.insert_one(model.__dict__)
         return model.model_registry_uuid
 
     @staticmethod
     def get_record_by_uuid(model_registry_uuid):
-        return (
-            session.query(ModelRegistryModel)
-            .filter_by(model_registry_uuid=model_registry_uuid)
-            .first()
+        return to_namespace(
+            ModelRegistryModel.collection.find_one(
+                {"model_registry_uuid": model_registry_uuid}
+            )
         )
 
     @staticmethod
     def update_record_by_uuid(model_registry_uuid, **kwargs):
-        record = (
-            session.query(ModelRegistryModel)
-            .filter_by(model_registry_uuid=model_registry_uuid)
-            .first()
+        ModelRegistryModel.collection.update_one(
+            {"model_registry_uuid": model_registry_uuid}, {"$set": kwargs}
         )
-        for key, value in kwargs.items():
-            setattr(record, key, value)
-        session.commit()
-        return record.model_registry_uuid
+        return model_registry_uuid
 
     @staticmethod
     def delete_record_by_uuid(model_registry_uuid):
-        record = (
-            session.query(ModelRegistryModel)
-            .filter_by(model_registry_uuid=model_registry_uuid)
-            .first()
+        ModelRegistryModel.collection.delete_one(
+            {"model_registry_uuid": model_registry_uuid}
         )
-        session.delete(record)
-        session.commit()
-        return record.model_registry_uuid
+        return model_registry_uuid
 
 
-class InferenceModel(Base):
-    __tablename__ = "inference_model"
-    inference_uuid = Column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
-    )
-    user_uuid = Column(String(36), ForeignKey("user_model.user_uuid"), nullable=False)
-    model_registry_uuid = Column(
-        String(36),
-        ForeignKey("model_registry_model.model_registry_uuid"),
-        nullable=False,
-    )
-    inference_datetime = Column(DateTime, nullable=False, default=datetime.now())
-    inference_status = Column(String(80), nullable=False)
+class InferenceModel:
+    collection = db["inference_model"]
 
     def __init__(
         self,
         user_uuid,
         model_registry_uuid,
         inference_status,
+        inference_uuid=None,
+        inference_datetime=None,
     ):
+        self.inference_uuid = (
+            str(uuid.uuid4()) if not inference_uuid else inference_uuid
+        )
         self.user_uuid = user_uuid
         self.model_registry_uuid = model_registry_uuid
+        self.inference_datetime = (
+            datetime.now() if not inference_datetime else inference_datetime
+        )
         self.inference_status = inference_status
 
+    @classmethod
+    def from_dict(cls, data):
+        if data:
+            return cls(
+                inference_uuid=data.get("inference_uuid"),
+                user_uuid=data.get("user_uuid"),
+                model_registry_uuid=data.get("model_registry_uuid"),
+                inference_datetime=data.get("inference_datetime"),
+                inference_status=data.get("inference_status"),
+            )
+        return None
+
     @staticmethod
-    def save_inference_to_db(
-        user_uuid,
-        model_registry_uuid,
-        inference_status,
-    ):
+    def save_inference_to_db(user_uuid, model_registry_uuid, inference_status):
         inference = InferenceModel(
             user_uuid=user_uuid,
             model_registry_uuid=model_registry_uuid,
             inference_status=inference_status,
         )
-        session.add(inference)
-        session.commit()
+        InferenceModel.collection.insert_one(inference.__dict__)
         return inference.inference_uuid
 
     @staticmethod
     def get_record_by_uuid(inference_uuid):
-        return (
-            session.query(InferenceModel)
-            .filter_by(inference_uuid=inference_uuid)
-            .first()
+        return to_namespace(
+            InferenceModel.collection.find_one({"inference_uuid": inference_uuid})
         )
 
     @staticmethod
     def get_record_by_model_registry_uuid(model_registry_uuid):
-        return (
-            session.query(InferenceModel)
-            .filter_by(model_registry_uuid=model_registry_uuid)
-            .first()
+        return to_namespace(
+            InferenceModel.collection.find_one(
+                {"model_registry_uuid": model_registry_uuid}
+            )
         )
 
     @staticmethod
     def delete_record_by_uuid(inference_uuid):
-        record = (
-            session.query(InferenceModel)
-            .filter_by(inference_uuid=inference_uuid)
-            .first()
-        )
-        session.delete(record)
-        session.commit()
-        return record.inference_uuid
+        InferenceModel.collection.delete_one({"inference_uuid": inference_uuid})
+        return inference_uuid
 
     @staticmethod
     def count_model_runs():
-        """
-        Count the number of times each model has been run.
-        """
-        return (
-            session.query(
-                InferenceModel.model_registry_uuid,
-                func.count(InferenceModel.model_registry_uuid).label("run_count"),
-            )
-            .group_by(InferenceModel.model_registry_uuid)
-            .all()
-        )
-
-    def __repr__(self):
-        return f"<InferenceModel {self.inference_uuid}>"
+        pipeline = [
+            {"$group": {"_id": "$model_registry_uuid", "run_count": {"$sum": 1}}},
+            {"$project": {"model_registry_uuid": "$_id", "run_count": 1}},
+        ]
+        return list(to_namespace(InferenceModel.collection.aggregate(pipeline)))
 
 
-class JobsModel(Base):
-    __tablename__ = "jobs_model"
-    job_uuid = Column(String(36), primary_key=True)
-    user_uuid = Column(String(36), ForeignKey("user_model.user_uuid"), nullable=False)
-    job_type = Column(String(80), nullable=False)
-    job_datetime = Column(DateTime, nullable=False, default=datetime.now())
-    job_status = Column(String(80), nullable=False)
-    reference_uuid = Column(String(36), nullable=True)
+class JobsModel:
+    collection = db["jobs_model"]
 
-    def __init__(self, job_uuid, user_uuid, job_type, job_status, reference_uuid):
+    def __init__(
+        self,
+        job_uuid,
+        user_uuid,
+        job_type,
+        job_status,
+        reference_uuid,
+        job_datetime=None,
+    ):
         self.job_uuid = job_uuid
         self.user_uuid = user_uuid
         self.job_type = job_type
+        self.job_datetime = datetime.now() if not job_datetime else job_datetime
         self.job_status = job_status
         self.reference_uuid = reference_uuid
+
+    @classmethod
+    def from_dict(cls, data):
+        if data:
+            return cls(
+                job_uuid=data.get("job_uuid"),
+                user_uuid=data.get("user_uuid"),
+                job_type=data.get("job_type"),
+                job_datetime=data.get("job_datetime"),
+                job_status=data.get("job_status"),
+                reference_uuid=data.get("reference_uuid"),
+            )
+        return None
 
     @staticmethod
     def save_job_to_db(job_uuid, user_uuid, job_type, job_status, reference_uuid):
@@ -332,97 +320,104 @@ class JobsModel(Base):
             job_status=job_status,
             reference_uuid=reference_uuid,
         )
-        session.add(job)
-        session.commit()
+        JobsModel.collection.insert_one(job.__dict__)
         return job.job_uuid
 
     @staticmethod
     def get_record_by_uuid(job_uuid):
-        return session.query(JobsModel).filter_by(job_uuid=job_uuid).first()
+        return to_namespace(JobsModel.collection.find_one({"job_uuid": job_uuid}))
 
     @staticmethod
     def update_task_status(job_uuid, job_status):
-        record = session.query(JobsModel).filter_by(job_uuid=job_uuid).first()
-        record.job_status = job_status
-        session.commit()
-        return record.job_uuid
+        JobsModel.collection.update_one(
+            {"job_uuid": job_uuid}, {"$set": {"job_status": job_status}}
+        )
+        return job_uuid
 
     @staticmethod
     def update_task_reference(job_uuid, reference_uuid):
-        record = session.query(JobsModel).filter_by(job_uuid=job_uuid).first()
-        record.reference_uuid = reference_uuid
-        session.commit()
-        return record.job_uuid
-
-    def __repr__(self):
-        return f"<JobsModel {self.job_uuid}>"
-
-
-# drop all tables and recreate them
-Base.metadata.create_all(engine)
+        JobsModel.collection.update_one(
+            {"job_uuid": job_uuid}, {"$set": {"reference_uuid": reference_uuid}}
+        )
+        return job_uuid
 
 
 def get_model_run_counts_with_details():
     try:
-        model_run_counts = (
-            session.query(
-                MLModel.model_uuid,
-                ModelRegistryModel.model_registry_uuid,
-                ModelRegistryModel.model_version,
-                func.coalesce(func.count(InferenceModel.model_registry_uuid), 0).label(
-                    "run_count"
-                ),
-                MLModel.model_name,
-                MLModel.model_type,
-                MLModel.upload_datetime,
-                # Determine registration status based on presence in ModelRegistryModel
-                func.coalesce(
-                    cast(
-                        case(
-                            (
-                                ModelRegistryModel.model_registry_uuid.isnot(None),
-                                literal(True),
-                            ),
-                            else_=literal(False),
-                        ),
-                        Integer,
-                    ),
-                    0,
-                ).label("registered"),
-            )
-            .outerjoin(
-                ModelRegistryModel, MLModel.model_uuid == ModelRegistryModel.model_uuid
-            )
-            .outerjoin(
-                InferenceModel,
-                ModelRegistryModel.model_registry_uuid
-                == InferenceModel.model_registry_uuid,
-            )
-            .group_by(
-                MLModel.model_uuid,
-                ModelRegistryModel.model_registry_uuid,
-                ModelRegistryModel.model_version,
-                MLModel.model_name,
-                MLModel.model_type,
-                MLModel.upload_datetime,
-            )
-        ).all()
+        pipeline = [
+            {
+                "$lookup": {
+                    "from": "ModelRegistryModel",
+                    "localField": "model_uuid",
+                    "foreignField": "model_uuid",
+                    "as": "registry_details",
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "InferenceModel",
+                    "localField": "registry_details.model_registry_uuid",
+                    "foreignField": "model_registry_uuid",
+                    "as": "inference_details",
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$registry_details",
+                    "preserveNullAndEmptyArrays": True,
+                }
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "model_uuid": "$model_uuid",
+                        "model_registry_uuid": "$registry_details.model_registry_uuid",
+                        "model_version": "$registry_details.model_version",
+                        "model_name": "$model_name",
+                        "model_type": "$model_type",
+                        "upload_datetime": "$upload_datetime",
+                    },
+                    "run_count": {
+                        "$sum": {
+                            "$cond": {
+                                "if": {"$ne": ["$inference_details", []]},
+                                "then": 1,
+                                "else": 0,
+                            }
+                        }
+                    },
+                    "registered": {
+                        "$max": {
+                            "$cond": {
+                                "if": {"$ne": ["$registry_details", None]},
+                                "then": 1,
+                                "else": 0,
+                            }
+                        }
+                    },
+                }
+            },
+        ]
+
+        model_run_counts = list(MLModel.collection.aggregate(pipeline))
     except Exception as e:
-        # Roll back the session in case of any error
-        session.rollback()
         raise Exception(f"Failed to fetch all models: {e}")
 
     resp = []
     for model in model_run_counts:
+        details = model["_id"]
         model_dict = {
-            "model_uuid": model.model_uuid,
-            "model_registry_uuid": model.model_registry_uuid,
-            "model_version": model.model_version,
-            "run_count": model.run_count if model.registered else 0,
-            "model_name": model.model_name,
-            "model_type": model.model_type,
-            "upload_datetime": model.upload_datetime.isoformat(),
-            "registered": bool(model.registered),
+            "model_registry_uuid": details.get("model_registry_uuid"),
+            "model_version": details.get("model_version"),
+            "run_count": model["run_count"] if model["registered"] else 0,
+            "model_name": details["model_name"],
+            "model_type": details["model_type"],
+            "upload_datetime": (
+                details["upload_datetime"].isoformat()
+                if details["upload_datetime"]
+                else None
+            ),
+            "registered": bool(model["registered"]),
         }
         resp.append(model_dict)
 
@@ -430,71 +425,84 @@ def get_model_run_counts_with_details():
 
 
 def get_model_run_counts_with_details_filter(top_n):
+    top_n = int(top_n)
     try:
-        model_run_counts = (
-            (
-                session.query(
-                    MLModel.model_uuid,
-                    ModelRegistryModel.model_registry_uuid,
-                    ModelRegistryModel.model_version,
-                    func.coalesce(
-                        func.count(InferenceModel.model_registry_uuid), 0
-                    ).label("run_count"),
-                    MLModel.model_name,
-                    MLModel.model_type,
-                    MLModel.upload_datetime,
-                    # Determine registration status based on presence in ModelRegistryModel
-                    func.coalesce(
-                        cast(
-                            case(
-                                (
-                                    ModelRegistryModel.model_registry_uuid.isnot(None),
-                                    literal(True),
-                                ),
-                                else_=literal(False),
-                            ),
-                            Integer,
-                        ),
-                        0,
-                    ).label("registered"),
-                )
-                .outerjoin(
-                    ModelRegistryModel,
-                    MLModel.model_uuid == ModelRegistryModel.model_uuid,
-                )
-                .outerjoin(
-                    InferenceModel,
-                    ModelRegistryModel.model_registry_uuid
-                    == InferenceModel.model_registry_uuid,
-                )
-                .group_by(
-                    MLModel.model_uuid,
-                    ModelRegistryModel.model_registry_uuid,
-                    ModelRegistryModel.model_version,
-                    MLModel.model_name,
-                    MLModel.model_type,
-                    MLModel.upload_datetime,
-                )
-            )
-            .order_by(desc("run_count"))
-            .limit(top_n)
-            .all()
-        )
+        pipeline = [
+            {
+                "$lookup": {
+                    "from": "ModelRegistryModel",
+                    "localField": "model_uuid",
+                    "foreignField": "model_uuid",
+                    "as": "registry_details",
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "InferenceModel",
+                    "localField": "registry_details.model_registry_uuid",
+                    "foreignField": "model_registry_uuid",
+                    "as": "inference_details",
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$registry_details",
+                    "preserveNullAndEmptyArrays": True,
+                }
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "model_uuid": "$model_uuid",
+                        "model_registry_uuid": "$registry_details.model_registry_uuid",
+                        "model_version": "$registry_details.model_version",
+                        "model_name": "$model_name",
+                        "model_type": "$model_type",
+                        "upload_datetime": "$upload_datetime",
+                    },
+                    "run_count": {
+                        "$sum": {
+                            "$cond": {
+                                "if": {"$ne": ["$inference_details", []]},
+                                "then": 1,
+                                "else": 0,
+                            }
+                        }
+                    },
+                    "registered": {
+                        "$max": {
+                            "$cond": {
+                                "if": {"$ne": ["$registry_details", None]},
+                                "then": 1,
+                                "else": 0,
+                            }
+                        }
+                    },
+                }
+            },
+            {"$sort": {"run_count": DESCENDING}},
+            {"$limit": top_n},
+        ]
+
+        model_run_counts = list(MLModel.collection.aggregate(pipeline))
     except Exception as e:
-        # Roll back the session in case of any error
-        session.rollback()
         raise Exception(f"Failed to fetch all models: {e}")
 
     resp = []
     for model in model_run_counts:
+        details = model["_id"]
         model_dict = {
-            "model_registry_uuid": model.model_registry_uuid,
-            "model_version": model.model_version,
-            "run_count": model.run_count if model.registered else 0,
-            "model_name": model.model_name,
-            "model_type": model.model_type,
-            "upload_datetime": model.upload_datetime.isoformat(),
-            "registered": bool(model.registered),  # Convert back to boolean
+            "model_registry_uuid": details.get("model_registry_uuid"),
+            "model_version": details.get("model_version"),
+            "run_count": model["run_count"] if model["registered"] else 0,
+            "model_name": details["model_name"],
+            "model_type": details["model_type"],
+            "upload_datetime": (
+                details["upload_datetime"].isoformat()
+                if details["upload_datetime"]
+                else None
+            ),
+            "registered": bool(model["registered"]),
         }
         resp.append(model_dict)
 
@@ -502,49 +510,50 @@ def get_model_run_counts_with_details_filter(top_n):
 
 
 def search_for_models(search_term):
-    search_term = f"%{search_term}%"
-    models = session.query(MLModel).filter(MLModel.model_name.ilike(search_term)).all()
+    search_regex = {"$regex": search_term, "$options": "i"}
+    models = to_namespace(MLModel.collection.find({"model_name": search_regex}))
+    return [model for model in models]
+
+
+def get_registered_model_by_user_uuid(user_uuid):
+    pipeline = [
+        {"$match": {"user_uuid": user_uuid}},
+        {
+            "$lookup": {
+                "from": "model_registry_model",
+                "localField": "model_uuid",
+                "foreignField": "model_uuid",
+                "as": "registry",
+            }
+        },
+        {"$unwind": "$registry"},
+        {
+            "$project": {
+                "model_registry_uuid": "$registry.model_registry_uuid",
+                "model_uuid": "$model_uuid",
+                "model_name": 1,
+                "model_type": 1,
+                "model_version": "$registry.model_version",
+                "model_status": "$registry.model_status",
+                "model_endpoint": "$registry.model_endpoint",
+            }
+        },
+    ]
+    records = list(MLModel.collection.aggregate(pipeline))
 
     resp = []
-    for model in models:
-        model_dict = {
-            "model_uuid": model.model_uuid,
-            "user_uuid": model.user_uuid,
-            "upload_datetime": model.upload_datetime.isoformat(),
-            "model_name": model.model_name,
-            "model_type": model.model_type,
-            "s3_url": model.s3_url,
-        }
-        resp.append(model_dict)
 
-    return resp
-
-
-def get_registered_model_by_user_uuid(user_uuid: str):
-    try:
-        # Query the ModelRegistryModel joined with MLModel
-        model_registry = (
-            session.query(ModelRegistryModel, MLModel.model_name, MLModel.model_type)
-            .join(MLModel, ModelRegistryModel.model_uuid == MLModel.model_uuid)
-            .filter(MLModel.user_uuid == user_uuid)
-            .all()
+    for record in records:
+        resp.append(
+            {
+                "model_uuid": record["model_uuid"],
+                "model_version": record["model_version"],
+                "model_registry_uuid": record["model_registry_uuid"],
+                "model_name": record["model_name"],
+                "model_type": record["model_type"],
+                "endpoint_name": record["model_endpoint"],
+                "status": record["model_status"],
+            }
         )
-    except Exception as e:
-        # Roll back the session in case of any error
-        session.rollback()
-        raise Exception(f"Failed to fetch all models: {e}")
-
-    resp = []
-    for model_registry, model_name, model_type in model_registry:
-        model_dict = {
-            "model_registry_uuid": model_registry.model_registry_uuid,
-            "model_uuid": model_registry.model_uuid,
-            "model_name": model_name,  # Using model_name from MLModel
-            "model_type": model_type,  # Using model_type from MLModel
-            "model_version": model_registry.model_version,
-            "model_status": model_registry.model_status,
-            "model_endpoint": model_registry.model_endpoint,
-        }
-        resp.append(model_dict)
 
     return resp
