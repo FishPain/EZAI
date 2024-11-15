@@ -152,7 +152,7 @@ class MLModel:
 
     # allow user to update model type
     @staticmethod
-    def update_model_type(model_uuid: str, new_model_type: str, current_version: int) -> Optional[Dict[str, Any]]:
+    def update_model_type(model_uuid: str, new_model_type: str, current_version: int):
         result = MLModel.collection.update_one(
             {"model_uuid": model_uuid, "version": current_version},
             {"$set": {"model_type": new_model_type}, "$inc": {"version": 1}}
